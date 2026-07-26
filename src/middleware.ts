@@ -1,10 +1,24 @@
-import { auth } from "@/lib/auth";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { jwtVerify } from "jose";
 
-export default auth((req) => {
+const AUTH_SECRET = new TextEncoder().encode(process.env.AUTH_SECRET);
+
+async function getSessionToken(req: NextRequest): Promise<Record<string, unknown> | null> {
+  try {
+    const token = req.cookies.get("authjs.session-token")?.value
+      || req.cookies.get("__Secure-authjs.session-token")?.value;
+    if (!token) return null;
+    const { payload } = await jwtVerify(token, AUTH_SECRET, { algorithms: ["HS256"] });
+    return payload as Record<string, unknown>;
+  } catch {
+    return null;
+  }
+}
+
+export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
-  const session = req.auth;
-  const role = session?.user?.role as string | undefined;
+  const session = await getSessionToken(req);
+  const role = session?.role as string | undefined;
 
   if (pathname.startsWith("/admin")) {
     if (!session) {
@@ -30,7 +44,7 @@ export default auth((req) => {
   }
 
   return NextResponse.next();
-});
+}
 
 export const config = {
   matcher: ["/admin/:path*", "/account/:path*", "/orders/:path*", "/checkout"],
