@@ -1,11 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useRequireAuth } from "@/hooks/use-auth";
 
 interface Address {
   id: string;
@@ -19,7 +19,7 @@ interface Address {
 }
 
 export default function AddressesPage() {
-  const { data: session } = useSession();
+  const { session, isLoading: authLoading } = useRequireAuth();
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -94,16 +94,21 @@ export default function AddressesPage() {
     }
   };
 
-  if (!session) {
+  if (authLoading) {
     return (
-      <div className="mx-auto max-w-7xl px-4 py-20 text-center lg:px-8">
-        <p className="text-muted-foreground">يجب تسجيل الدخول أولاً</p>
-        <Link href="/login" className="mt-4 inline-block font-semibold text-primary">
-          تسجيل الدخول
-        </Link>
+      <div className="mx-auto max-w-7xl px-4 py-10 lg:px-8">
+        <div className="animate-pulse space-y-4">
+          <div className="h-8 w-48 rounded bg-muted" />
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="h-32 rounded-2xl bg-muted animate-pulse" />
+            <div className="h-32 rounded-2xl bg-muted animate-pulse" />
+          </div>
+        </div>
       </div>
     );
   }
+
+  if (!session?.user) return null;
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-10 lg:px-8 animate-fade-in">

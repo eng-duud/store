@@ -1,22 +1,24 @@
 "use client";
 
-import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { useRequireAuth } from "@/hooks/use-auth";
 
 export default function ProfilePage() {
-  const { data: session } = useSession();
+  const { session, isLoading } = useRequireAuth();
 
-  if (!session) {
+  if (isLoading) {
     return (
-      <div className="mx-auto max-w-7xl px-4 py-20 text-center lg:px-8">
-        <p className="text-muted-foreground">يجب تسجيل الدخول أولاً</p>
-        <Link href="/login" className="mt-4 inline-block font-semibold text-primary">
-          تسجيل الدخول
-        </Link>
+      <div className="mx-auto max-w-3xl px-4 py-10 lg:px-8">
+        <div className="animate-pulse space-y-4">
+          <div className="h-8 w-48 rounded bg-muted" />
+          <div className="h-64 rounded-2xl bg-muted" />
+        </div>
       </div>
     );
   }
+
+  if (!session?.user) return null;
 
   const user = session.user;
 

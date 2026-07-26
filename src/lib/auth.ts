@@ -84,5 +84,31 @@ export const {
       }
       return session;
     },
+    async authorized({ auth, request }) {
+      const { pathname } = request.nextUrl;
+
+      if (pathname.startsWith("/admin")) {
+        if (!auth) return false;
+        const role = auth.user?.role;
+        if (role !== "ADMIN" && role !== "EMPLOYEE") {
+          return Response.redirect(new URL("/", request.url));
+        }
+      }
+
+      if (
+        pathname.startsWith("/account") ||
+        pathname.startsWith("/orders") ||
+        pathname === "/checkout"
+      ) {
+        if (!auth) return false;
+      }
+
+      return true;
+    },
+    async redirect({ url, baseUrl }) {
+      if (url.startsWith("/")) return `${baseUrl}${url}`;
+      if (new URL(url).origin === baseUrl) return url;
+      return baseUrl;
+    },
   },
 });

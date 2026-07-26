@@ -1,21 +1,23 @@
 "use client";
 
-import { useSession } from "next-auth/react";
 import Link from "next/link";
+import { useRequireAuth } from "@/hooks/use-auth";
 
 export default function AccountPage() {
-  const { data: session } = useSession();
+  const { session, isLoading } = useRequireAuth();
 
-  if (!session) {
+  if (isLoading) {
     return (
       <div className="mx-auto max-w-7xl px-4 py-20 text-center lg:px-8">
-        <p className="text-muted-foreground">يجب تسجيل الدخول أولاً</p>
-        <Link href="/login" className="mt-4 inline-block text-sm font-semibold text-primary transition-colors hover:text-primary/80">
-          تسجيل الدخول
-        </Link>
+        <div className="animate-pulse space-y-4">
+          <div className="h-8 w-48 mx-auto rounded bg-muted" />
+          <div className="h-4 w-32 mx-auto rounded bg-muted" />
+        </div>
       </div>
     );
   }
+
+  if (!session?.user) return null;
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-10 lg:px-8">

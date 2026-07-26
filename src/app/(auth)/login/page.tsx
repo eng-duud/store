@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { signIn, useSession } from "next-auth/react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { loginSchema } from "@/lib/validations";
@@ -13,6 +15,22 @@ type LoginForm = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
+  const { data: session, status } = useSession();
+
+  useEffect(() => {
+    if (status === "authenticated" && session?.user) {
+      const searchParams = new URLSearchParams(window.location.search);
+      const callbackUrl = searchParams.get("callbackUrl");
+      if (callbackUrl) {
+        router.replace(callbackUrl);
+      } else if (session.user.role === "ADMIN" || session.user.role === "EMPLOYEE") {
+        router.replace("/admin");
+      } else {
+        router.replace("/");
+      }
+    }
+  }, [session, status, router]);
 
   const {
     register,
@@ -25,7 +43,9 @@ export default function LoginPage() {
   async function onSubmit(data: LoginForm) {
     setIsLoading(true);
     try {
-      const { signIn } = await import("next-auth/react");
+      const searchParams = new URLSearchParams(window.location.search);
+      const callbackUrl = searchParams.get("callbackUrl") || "/";
+
       const result = await signIn("credentials", {
         email: data.email,
         password: data.password,
@@ -34,17 +54,21 @@ export default function LoginPage() {
 
       if (result?.error) {
         toast.error("بيانات الدخول غير صحيحة، يرجى المحاولة مرة أخرى");
-      } else {
-        toast.success("تم تسجيل الدخول بنجاح!");
-        const searchParams = new URLSearchParams(window.location.search);
-        const callbackUrl = searchParams.get("callbackUrl") || "/";
-        window.location.href = callbackUrl;
+        setIsLoading(false);
+        return;
       }
+
+      toast.success("تم تسجيل الدخول بنجاح!");
+      router.replace(callbackUrl);
+      router.refresh();
     } catch {
       toast.error("حدث خطأ غير متوقع أثناء تسجيل الدخول");
-    } finally {
       setIsLoading(false);
     }
+  }
+
+  if (status === "authenticated") {
+    return null;
   }
 
   return (
