@@ -94,17 +94,17 @@ export function GlobalSearch() {
     <div ref={containerRef} className="relative hidden md:block">
       <button
         onClick={() => setOpen(true)}
-        className="flex h-9 items-center gap-2 rounded-xl border bg-background px-3 text-xs text-muted-foreground shadow-sm transition-all duration-200 hover:bg-accent hover:text-foreground hover:shadow-md"
+        className="flex h-11 w-full max-w-sm items-center gap-2.5 rounded-xl border bg-background px-4 text-sm text-muted-foreground shadow-sm transition-all duration-200 hover:bg-accent hover:text-foreground hover:shadow-md"
       >
-        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-        <span>بحث...</span>
-        <kbd className="pointer-events-none hidden h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-60 sm:inline-flex">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        <span>بحث في المنتجات، الطلبات، العملاء...</span>
+        <kbd className="pointer-events-none ml-auto hidden h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-60 sm:inline-flex">
           <span className="text-[11px]">⌘</span>K
         </kbd>
       </button>
 
       {open && (
-        <div className="absolute left-0 top-full z-50 mt-2 w-[340px] lg:w-[420px] rounded-2xl border bg-card shadow-elevated overflow-hidden animate-slide-up">
+        <div className="absolute left-0 top-full z-50 mt-2 w-full min-w-[380px] max-w-lg rounded-2xl border bg-card shadow-elevated overflow-hidden animate-slide-up">
           <div className="relative border-b">
             <div className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none">
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
