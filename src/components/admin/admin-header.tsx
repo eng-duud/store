@@ -6,6 +6,7 @@ import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { UserMenu } from "@/components/layout/user-menu";
 import { Sheet } from "@/components/ui/sheet";
 import { AdminSidebar } from "./admin-sidebar";
+import { GlobalSearch } from "./global-search";
 
 export function AdminHeader() {
   const [sidebarOpen, setSidebarOpen] = React.useState(false);
@@ -36,6 +37,10 @@ export function AdminHeader() {
             </svg>
           </button>
           <h1 className="text-base font-bold tracking-tight lg:hidden">لوحة التحكم</h1>
+        </div>
+
+        <div className="flex-1 flex justify-center px-4">
+          <GlobalSearch />
         </div>
 
         <div className="flex items-center gap-3">
