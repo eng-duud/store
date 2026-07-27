@@ -451,25 +451,27 @@ export default function AdminProductsPage() {
 
       {/* Category Filter Bar */}
       {allFilterCategories.length > 0 && (
-        <div className="relative">
-          <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent" style={{ scrollbarWidth: "thin" }}>
+        <div className="rounded-2xl border bg-card shadow-card px-4 py-3">
+          <div className="flex gap-3 overflow-x-auto" style={{ maxHeight: "96px", scrollbarWidth: "thin" }}>
             <button
               onClick={() => {
                 setCategoryFilter(null);
                 fetchProducts(search, statusFilter, null);
               }}
-              className={`flex flex-col items-center gap-1.5 flex-shrink-0 transition-all duration-200 ${
+              className={`flex flex-col items-center gap-1 flex-shrink-0 transition-all duration-200 pt-0.5 ${
                 categoryFilter === null ? "opacity-100 scale-105" : "opacity-60 hover:opacity-100"
               }`}
             >
-              <div className={`h-14 w-14 rounded-full flex items-center justify-center text-lg font-bold transition-all duration-200 ${
+              <div className={`h-12 w-12 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-200 ${
                 categoryFilter === null
                   ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25 ring-2 ring-primary ring-offset-2 ring-offset-background"
                   : "bg-muted text-muted-foreground hover:bg-accent"
               }`}>
                 الكل
               </div>
-              <span className="text-[10px] font-medium text-muted-foreground whitespace-nowrap">الكل</span>
+              <span className={`text-[10px] font-medium whitespace-nowrap ${
+                categoryFilter === null ? "text-primary font-bold" : "text-muted-foreground"
+              }`}>الكل</span>
             </button>
             {allFilterCategories.map((cat) => (
               <button
@@ -479,13 +481,13 @@ export default function AdminProductsPage() {
                   setCategoryFilter(newId);
                   fetchProducts(search, statusFilter, newId);
                 }}
-                className={`flex flex-col items-center gap-1.5 flex-shrink-0 transition-all duration-200 ${
-                  cat.depth === 1 ? "ml-1" : ""
+                className={`flex flex-col items-center gap-1 flex-shrink-0 transition-all duration-200 pt-0.5 ${
+                  cat.depth === 1 ? "ml-0.5" : ""
                 } ${
                   categoryFilter === cat.id ? "opacity-100 scale-105" : "opacity-60 hover:opacity-100"
                 }`}
               >
-                <div className={`h-14 w-14 rounded-full overflow-hidden flex items-center justify-center transition-all duration-200 ${
+                <div className={`h-12 w-12 rounded-full overflow-hidden flex items-center justify-center transition-all duration-200 ${
                   categoryFilter === cat.id
                     ? "ring-2 ring-primary ring-offset-2 ring-offset-background shadow-lg shadow-primary/25"
                     : "ring-1 ring-border hover:ring-primary/50"
@@ -493,14 +495,14 @@ export default function AdminProductsPage() {
                   {cat.imageId ? (
                     <img src={cat.imageId} alt={cat.name} className="h-full w-full object-cover" />
                   ) : (
-                    <span className={`text-sm font-bold ${
+                    <span className={`text-xs font-bold ${
                       categoryFilter === cat.id ? "text-primary" : "text-muted-foreground"
                     }`}>
                       {cat.name.slice(0, 2)}
                     </span>
                   )}
                 </div>
-                <span className={`text-[10px] font-medium whitespace-nowrap max-w-[60px] truncate ${
+                <span className={`text-[10px] font-medium whitespace-nowrap max-w-[56px] truncate ${
                   categoryFilter === cat.id ? "text-primary font-bold" : "text-muted-foreground"
                 }`}>
                   {cat.name}
