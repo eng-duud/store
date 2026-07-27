@@ -25,6 +25,10 @@ function buildProductWhere(filters: ProductFilters): any {
     };
   }
 
+  if (filters.isFeatured) {
+    where.isFeatured = true;
+  }
+
   if (filters.minPrice || filters.maxPrice) {
     where.price = {};
     if (filters.minPrice) where.price.gte = filters.minPrice;

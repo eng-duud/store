@@ -43,7 +43,7 @@ export function useFeaturedProducts() {
     queryKey: ["products", "featured"],
     queryFn: async () => {
       const { data } = await axios.get<{ success: boolean; data: PaginatedResponse<Product> }>(
-        "/api/products?limit=8&sort=newest"
+        "/api/products?featured=true&limit=8&sort=newest"
       );
       return data.data.items;
     },
