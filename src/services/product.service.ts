@@ -174,6 +174,7 @@ export async function getLowStockProducts(threshold?: number) {
 export async function getAdminProducts(filters: {
   search?: string;
   status?: string;
+  categoryId?: string;
   page?: number;
   limit?: number;
 }) {
@@ -193,6 +194,14 @@ export async function getAdminProducts(filters: {
 
   if (filters.status) {
     where.status = filters.status as "DRAFT" | "ACTIVE" | "ARCHIVED";
+  }
+
+  if (filters.categoryId) {
+    where.categories = {
+      some: {
+        categoryId: filters.categoryId,
+      },
+    };
   }
 
   const [items, total] = await Promise.all([

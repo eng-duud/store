@@ -10,7 +10,10 @@ interface CategoryOption {
   id: string;
   name: string;
   parentId: string | null;
+  imageId: string | null;
   parent?: { id: string; name: string } | null;
+  children?: CategoryOption[];
+  _count?: { products: number };
 }
 
 interface AdminProduct {
@@ -44,6 +47,7 @@ export default function AdminProductsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
 
   const { formatCurrency, settings } = useSettings();
 
@@ -65,11 +69,12 @@ export default function AdminProductsPage() {
     imagePublicId: "",
   });
 
-  function fetchProducts(q?: string, status?: string) {
+  function fetchProducts(q?: string, status?: string, catId?: string | null) {
     setIsLoading(true);
     const params = new URLSearchParams();
     if (q) params.set("q", q);
     if (status) params.set("status", status);
+    if (catId) params.set("categoryId", catId);
 
     fetch(`/api/admin/products?${params}`)
       .then((r) => r.json())
@@ -173,7 +178,7 @@ export default function AdminProductsPage() {
         if (d.success) {
           toast.success("تم تعديل المنتج بنجاح!");
           setShowForm(false);
-          fetchProducts(search, statusFilter);
+          fetchProducts(search, statusFilter, categoryFilter);
         } else {
           toast.error(d.error || "حدث خطأ أثناء تعديل المنتج");
         }
@@ -187,7 +192,7 @@ export default function AdminProductsPage() {
         if (d.success) {
           toast.success("تم إضافة المنتج بنجاح!");
           setShowForm(false);
-          fetchProducts(search, statusFilter);
+          fetchProducts(search, statusFilter, categoryFilter);
         } else {
           toast.error(d.error || "حدث خطأ أثناء إضافة المنتج");
         }
@@ -203,7 +208,7 @@ export default function AdminProductsPage() {
       const d = await res.json();
       if (d.success) {
         toast.success("تم نسخ المنتج بنجاح!");
-        fetchProducts(search, statusFilter);
+          fetchProducts(search, statusFilter, categoryFilter);
       } else {
         toast.error(d.error || "فشل تكرار المنتج");
       }
@@ -219,7 +224,7 @@ export default function AdminProductsPage() {
       const d = await res.json();
       if (d.success) {
         toast.success("تم حذف المنتج بنجاح!");
-        fetchProducts(search, statusFilter);
+          fetchProducts(search, statusFilter, categoryFilter);
       } else {
         toast.error(d.error || "فشل حذف المنتج");
       }
@@ -229,6 +234,23 @@ export default function AdminProductsPage() {
   }
 
   const topLevelCategories = categories.filter((c) => !c.parentId);
+
+  function buildCategoryTree(): CategoryOption[] {
+    const topLevel = categories.filter((c) => !c.parentId);
+    return topLevel.map((parent) => ({
+      ...parent,
+      children: categories.filter((c) => c.parentId === parent.id),
+    }));
+  }
+
+  const categoryTree = buildCategoryTree();
+  const allFilterCategories: { id: string; name: string; imageId: string | null; depth: number }[] = [];
+  for (const parent of categoryTree) {
+    allFilterCategories.push({ id: parent.id, name: parent.name, imageId: parent.imageId, depth: 0 });
+    for (const child of parent.children || []) {
+      allFilterCategories.push({ id: child.id, name: child.name, imageId: child.imageId, depth: 1 });
+    }
+  }
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -413,7 +435,7 @@ export default function AdminProductsPage() {
           value={statusFilter}
           onChange={(e) => {
             setStatusFilter(e.target.value);
-            fetchProducts(search, e.target.value);
+            fetchProducts(search, e.target.value, categoryFilter);
           }}
           className="h-11 rounded-xl border border-input bg-card px-3 text-sm shadow-card"
         >
@@ -422,10 +444,72 @@ export default function AdminProductsPage() {
           <option value="DRAFT">مسودة</option>
           <option value="ARCHIVED">مؤرشف</option>
         </select>
-        <Button onClick={() => fetchProducts(search, statusFilter)} className="rounded-xl px-6">
+        <Button onClick={() => fetchProducts(search, statusFilter, categoryFilter)} className="rounded-xl px-6">
           بحث
         </Button>
       </div>
+
+      {/* Category Filter Bar */}
+      {allFilterCategories.length > 0 && (
+        <div className="relative">
+          <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent" style={{ scrollbarWidth: "thin" }}>
+            <button
+              onClick={() => {
+                setCategoryFilter(null);
+                fetchProducts(search, statusFilter, null);
+              }}
+              className={`flex flex-col items-center gap-1.5 flex-shrink-0 transition-all duration-200 ${
+                categoryFilter === null ? "opacity-100 scale-105" : "opacity-60 hover:opacity-100"
+              }`}
+            >
+              <div className={`h-14 w-14 rounded-full flex items-center justify-center text-lg font-bold transition-all duration-200 ${
+                categoryFilter === null
+                  ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25 ring-2 ring-primary ring-offset-2 ring-offset-background"
+                  : "bg-muted text-muted-foreground hover:bg-accent"
+              }`}>
+                الكل
+              </div>
+              <span className="text-[10px] font-medium text-muted-foreground whitespace-nowrap">الكل</span>
+            </button>
+            {allFilterCategories.map((cat) => (
+              <button
+                key={cat.id}
+                onClick={() => {
+                  const newId = categoryFilter === cat.id ? null : cat.id;
+                  setCategoryFilter(newId);
+                  fetchProducts(search, statusFilter, newId);
+                }}
+                className={`flex flex-col items-center gap-1.5 flex-shrink-0 transition-all duration-200 ${
+                  cat.depth === 1 ? "ml-1" : ""
+                } ${
+                  categoryFilter === cat.id ? "opacity-100 scale-105" : "opacity-60 hover:opacity-100"
+                }`}
+              >
+                <div className={`h-14 w-14 rounded-full overflow-hidden flex items-center justify-center transition-all duration-200 ${
+                  categoryFilter === cat.id
+                    ? "ring-2 ring-primary ring-offset-2 ring-offset-background shadow-lg shadow-primary/25"
+                    : "ring-1 ring-border hover:ring-primary/50"
+                }`}>
+                  {cat.imageId ? (
+                    <img src={cat.imageId} alt={cat.name} className="h-full w-full object-cover" />
+                  ) : (
+                    <span className={`text-sm font-bold ${
+                      categoryFilter === cat.id ? "text-primary" : "text-muted-foreground"
+                    }`}>
+                      {cat.name.slice(0, 2)}
+                    </span>
+                  )}
+                </div>
+                <span className={`text-[10px] font-medium whitespace-nowrap max-w-[60px] truncate ${
+                  categoryFilter === cat.id ? "text-primary font-bold" : "text-muted-foreground"
+                }`}>
+                  {cat.name}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {isLoading ? (
         <div className="space-y-3">
