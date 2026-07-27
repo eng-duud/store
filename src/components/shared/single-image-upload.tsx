@@ -7,6 +7,7 @@ export interface SingleImageUploadProps {
   value?: string;
   onChange?: (url: string | null) => void;
   onMediaId?: (mediaId: string) => void;
+  onPublicId?: (publicId: string | null) => void;
   entityType: string;
   entityId?: string;
   folder?: string;
@@ -20,6 +21,7 @@ export function SingleImageUpload({
   value,
   onChange,
   onMediaId,
+  onPublicId,
   entityType,
   entityId,
   folder = "system",
@@ -61,6 +63,7 @@ export function SingleImageUpload({
         if (data.success) {
           onChange?.(data.data.secureUrl || data.data.url);
           onMediaId?.(data.data.id);
+          onPublicId?.(data.data.publicId || null);
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : "Upload failed");
@@ -68,7 +71,7 @@ export function SingleImageUpload({
         setUploading(false);
       }
     },
-    [entityType, entityId, folder, altText, onChange, onMediaId]
+    [entityType, entityId, folder, altText, onChange, onMediaId, onPublicId]
   );
 
   const handleFile = useCallback(
@@ -96,8 +99,9 @@ export function SingleImageUpload({
   const handleDelete = useCallback(() => {
     onChange?.(null);
     onMediaId?.("");
+    onPublicId?.(null);
     setError(null);
-  }, [onChange, onMediaId]);
+  }, [onChange, onMediaId, onPublicId]);
 
   return (
     <div className={`relative ${className}`}>
@@ -172,6 +176,7 @@ export function SingleImageUpload({
           ) : (
             <div className="flex flex-col items-center gap-2">
               <div className="p-2 bg-gray-100 rounded-full">
+                {/* eslint-disable-next-line jsx-a11y/alt-text */}
                 <Image className="h-6 w-6 text-gray-400" aria-hidden="true" />
               </div>
               <p className="text-sm text-gray-600">{placeholder}</p>

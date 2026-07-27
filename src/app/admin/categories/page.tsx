@@ -217,10 +217,16 @@ export default function AdminCategoriesPage() {
               >
                 <option value="">بدون (فئة رئيسية)</option>
                 {categories
-                  .filter((cat) => !editingCategory || cat.id !== editingCategory.id)
+                  .filter((cat) => {
+                    if (editingCategory) {
+                      if (cat.id === editingCategory.id) return false;
+                      if (cat.parentId === editingCategory.id) return false;
+                    }
+                    return true;
+                  })
                   .map((cat) => (
                     <option key={cat.id} value={cat.id}>
-                      {cat.name}
+                      {cat.parent ? `  └ ${cat.name}` : cat.name}
                     </option>
                   ))}
               </select>

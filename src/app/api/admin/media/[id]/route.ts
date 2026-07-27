@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { requireAdmin } from "@/lib/admin";
 import { mediaService } from "@/services/media.service";
 
 export async function GET(
@@ -7,11 +7,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await auth();
-    if (!session?.user || (session.user as any).role !== "ADMIN") {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
+    await requireAdmin();
     const { id } = await params;
     const media = await mediaService.getById(id);
 
@@ -21,6 +17,9 @@ export async function GET(
 
     return NextResponse.json({ success: true, data: media });
   } catch (error) {
+    if (error instanceof Error && error.message === "UNAUTHORIZED") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     console.error("Media get error:", error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Failed to get media" },
@@ -34,11 +33,7 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await auth();
-    if (!session?.user || (session.user as any).role !== "ADMIN") {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
+    await requireAdmin();
     const { id } = await params;
     const formData = await request.formData();
     const file = formData.get("file") as File | null;
@@ -64,6 +59,9 @@ export async function PUT(
 
     return NextResponse.json({ success: true, data: result });
   } catch (error) {
+    if (error instanceof Error && error.message === "UNAUTHORIZED") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     console.error("Media replace error:", error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Replace failed" },
@@ -77,11 +75,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await auth();
-    if (!session?.user || (session.user as any).role !== "ADMIN") {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
+    await requireAdmin();
     const { id } = await params;
     const body = await request.json();
 
@@ -102,6 +96,9 @@ export async function PATCH(
 
     return NextResponse.json({ success: true, data: media });
   } catch (error) {
+    if (error instanceof Error && error.message === "UNAUTHORIZED") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     console.error("Media update error:", error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Update failed" },
@@ -115,16 +112,15 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await auth();
-    if (!session?.user || (session.user as any).role !== "ADMIN") {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
+    await requireAdmin();
     const { id } = await params;
     const result = await mediaService.delete(id);
 
     return NextResponse.json({ success: true, data: result });
   } catch (error) {
+    if (error instanceof Error && error.message === "UNAUTHORIZED") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     console.error("Media delete error:", error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Delete failed" },

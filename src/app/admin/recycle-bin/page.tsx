@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
 
 interface RecycleBinItem {
   id: string;
@@ -45,12 +46,20 @@ export default function AdminRecycleBinPage() {
     }
     setActionId(id);
     try {
-      await fetch("/api/admin/recycle-bin", {
+      const resp = await fetch("/api/admin/recycle-bin", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action, type, id }),
       });
-      fetchItems();
+      const d = await resp.json();
+      if (d.success) {
+        toast.success(d.message || "تمت العملية بنجاح");
+        fetchItems();
+      } else {
+        toast.error(d.error || "فشلت العملية");
+      }
+    } catch {
+      toast.error("حدث خطأ أثناء تنفيذ العملية");
     } finally {
       setActionId(null);
     }

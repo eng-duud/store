@@ -48,7 +48,12 @@ export async function PUT(
       status: body.status,
       isFeatured: body.isFeatured,
       categoryIds: body.categoryIds,
-      imageUrls: body.imageUrls,
+      images: Array.isArray(body.images) && body.images.length > 0
+        ? body.images.map((img: any) => ({
+            url: typeof img === "string" ? img : img.url,
+            publicId: typeof img === "object" ? img.publicId || undefined : undefined,
+          }))
+        : undefined,
     });
 
     await createAuditLog({

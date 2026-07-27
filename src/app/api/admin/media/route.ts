@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { requireAdmin } from "@/lib/admin";
 import { mediaService } from "@/services/media.service";
 import { MEDIA_FOLDERS, type MediaFolder } from "@/lib/cloudinary";
 
@@ -18,10 +18,7 @@ const FOLDER_MAP: Record<string, MediaFolder> = {
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await auth();
-    if (!session?.user || (session.user as any).role !== "ADMIN") {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const session = await requireAdmin();
 
     const formData = await request.formData();
     const file = formData.get("file") as File | null;
@@ -73,10 +70,7 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await auth();
-    if (!session?.user || (session.user as any).role !== "ADMIN") {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    await requireAdmin();
 
     const { searchParams } = new URL(request.url);
     const entityType = searchParams.get("entityType");

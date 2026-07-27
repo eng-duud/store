@@ -1,6 +1,7 @@
 import prisma from "@/lib/prisma";
 import type { ProductFilters, PaginatedResponse } from "@/types";
 import type { Prisma } from "@prisma/client";
+import { deleteFromCloudinary } from "@/lib/cloudinary";
 
 function buildProductWhere(filters: ProductFilters): any {
   const where: any = {
@@ -175,7 +176,9 @@ export async function getAdminProducts(filters: {
   const page = filters.page || 1;
   const limit = filters.limit || 20;
 
-  const where: Prisma.ProductWhereInput = {};
+  const where: Prisma.ProductWhereInput = {
+    deletedAt: null,
+  };
 
   if (filters.search) {
     where.OR = [
@@ -292,27 +295,43 @@ export async function updateProduct(id: string, data: Partial<CreateProductInput
     await prisma.productCategory.deleteMany({ where: { productId: id } });
   }
 
-  if (data.imageUrls || data.images) {
-    await prisma.productImage.deleteMany({ where: { productId: id } });
-  }
+  let imageData: { url: string; publicId: string | null; altText: string | null; isPrimary: boolean; sortOrder: number }[] | undefined;
 
-  const imageData = data.images
-    ? data.images.map((img, i) => ({
-        url: img.url,
-        publicId: img.publicId || null,
-        altText: img.altText || null,
-        isPrimary: img.isPrimary ?? i === 0,
-        sortOrder: img.sortOrder ?? i,
-      }))
-    : data.imageUrls
-    ? data.imageUrls.map((url, i) => ({
-        url,
-        publicId: null,
-        altText: null,
-        isPrimary: i === 0,
-        sortOrder: i,
-      }))
-    : undefined;
+  if (data.images) {
+    const existingImages = await prisma.productImage.findMany({ where: { productId: id } });
+
+    if (data.images.length === 0) {
+      for (const img of existingImages) {
+        if (img.publicId) {
+          try { await deleteFromCloudinary(img.publicId); } catch {}
+        }
+      }
+      await prisma.productImage.deleteMany({ where: { productId: id } });
+      imageData = undefined;
+    } else {
+      const newUrl = data.images[0]?.url;
+      const hasImageChanged = existingImages.length === 0 || existingImages[0]?.url !== newUrl;
+
+      if (hasImageChanged) {
+        for (const img of existingImages) {
+          if (img.publicId) {
+            try { await deleteFromCloudinary(img.publicId); } catch {}
+          }
+        }
+        await prisma.productImage.deleteMany({ where: { productId: id } });
+
+        imageData = data.images.map((img, i) => ({
+          url: img.url,
+          publicId: img.publicId || null,
+          altText: img.altText || null,
+          isPrimary: img.isPrimary ?? i === 0,
+          sortOrder: img.sortOrder ?? i,
+        }));
+      } else {
+        imageData = undefined;
+      }
+    }
+  }
 
   return prisma.product.update({
     where: { id },

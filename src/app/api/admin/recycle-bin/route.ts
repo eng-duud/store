@@ -40,6 +40,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: false, error: "إجراء غير معروف" }, { status: 400 });
   } catch (error) {
     console.error("Recycle bin error:", error);
-    return NextResponse.json({ success: false, error: "حدث خطأ" }, { status: 500 });
+    const message = error instanceof Error ? error.message : "حدث خطأ";
+    return NextResponse.json({ success: false, error: message }, { status: 500 });
   }
 }

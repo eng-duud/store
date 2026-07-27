@@ -1,6 +1,7 @@
 import prisma from "@/lib/prisma";
 import { createAuditLog } from "./audit.service";
 import { getStoreSettings, formatCurrency } from "./settings.service";
+import { deleteFromCloudinary } from "@/lib/cloudinary";
 
 export interface RecycleBinItem {
   id: string;
@@ -94,10 +95,38 @@ export async function restoreRecycleBinItem(type: "PRODUCT" | "CATEGORY" | "EXPE
 
 export async function permanentlyDeleteRecycleBinItem(type: "PRODUCT" | "CATEGORY" | "EXPENSE", id: string, userId?: string, userName?: string) {
   if (type === "PRODUCT") {
+    const product = await prisma.product.findUnique({
+      where: { id },
+      include: {
+        _count: { select: { orderItems: true, inventoryTransactions: true, cartItems: true } },
+      },
+    });
+
+    if (!product) throw new Error("المنتج غير موجود");
+
+    if (product._count.orderItems > 0) {
+      throw new Error("لا يمكن حذف منتج مرتبط بطلبات. ألغِ الطلبات أولاً.");
+    }
+    if (product._count.inventoryTransactions > 0) {
+      throw new Error("لا يمكن حذف منتج له حركات مخزون. يُرجى مراجعة سجل المخزون.");
+    }
+
+    const images = await prisma.productImage.findMany({ where: { productId: id } });
+    for (const img of images) {
+      if (img.publicId) {
+        try { await deleteFromCloudinary(img.publicId); } catch {}
+      }
+    }
+
     await prisma.productImage.deleteMany({ where: { productId: id } });
     await prisma.productCategory.deleteMany({ where: { productId: id } });
+    await prisma.productVariant.deleteMany({ where: { productId: id } });
     await prisma.product.delete({ where: { id } });
   } else if (type === "CATEGORY") {
+    const productCount = await prisma.productCategory.count({ where: { categoryId: id } });
+    if (productCount > 0) {
+      throw new Error("لا يمكن حذف فئة مرتبط بها منتجات. افصل المنتجات أولاً.");
+    }
     await prisma.category.delete({ where: { id } });
   } else if (type === "EXPENSE") {
     await prisma.expense.delete({ where: { id } });

@@ -1,13 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { requireAdmin } from "@/lib/admin";
 import { mediaService } from "@/services/media.service";
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await auth();
-    if (!session?.user || (session.user as any).role !== "ADMIN") {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    await requireAdmin();
 
     const orphans = await mediaService.findOrphans();
 
@@ -19,6 +16,9 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
+    if (error instanceof Error && error.message === "UNAUTHORIZED") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     console.error("Orphan detection error:", error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Failed to detect orphans" },
@@ -29,10 +29,7 @@ export async function POST(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
-    const session = await auth();
-    if (!session?.user || (session.user as any).role !== "ADMIN") {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    await requireAdmin();
 
     const result = await mediaService.cleanupOrphans();
 
@@ -41,6 +38,9 @@ export async function DELETE(request: NextRequest) {
       data: result,
     });
   } catch (error) {
+    if (error instanceof Error && error.message === "UNAUTHORIZED") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     console.error("Orphan cleanup error:", error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Cleanup failed" },

@@ -9,6 +9,8 @@ import { SingleImageUpload } from "@/components/shared/single-image-upload";
 interface CategoryOption {
   id: string;
   name: string;
+  parentId: string | null;
+  parent?: { id: string; name: string } | null;
 }
 
 interface AdminProduct {
@@ -23,7 +25,7 @@ interface AdminProduct {
   description: string | null;
   shortDescription: string | null;
   createdAt: string;
-  images: { id: string; url: string }[];
+  images: { id: string; url: string; publicId: string | null }[];
   categories: { category: { id: string; name: string } }[];
   brand: { name: string } | null;
   _count: { orderItems: number };
@@ -60,6 +62,7 @@ export default function AdminProductsPage() {
     shortDescription: "",
     categoryIds: [] as string[],
     imageUrl: "",
+    imagePublicId: "",
   });
 
   function fetchProducts(q?: string, status?: string) {
@@ -106,6 +109,7 @@ export default function AdminProductsPage() {
       shortDescription: "",
       categoryIds: [],
       imageUrl: "",
+      imagePublicId: "",
     });
     setShowForm(true);
   }
@@ -124,13 +128,27 @@ export default function AdminProductsPage() {
       shortDescription: product.shortDescription || "",
       categoryIds: product.categories.map((c) => c.category.id),
       imageUrl: product.images[0]?.url || "",
+      imagePublicId: product.images[0]?.publicId || "",
     });
     setShowForm(true);
+  }
+
+  function toggleCategory(categoryId: string) {
+    setForm((prev) => {
+      const ids = prev.categoryIds.includes(categoryId)
+        ? prev.categoryIds.filter((id) => id !== categoryId)
+        : [...prev.categoryIds, categoryId];
+      return { ...prev, categoryIds: ids };
+    });
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     try {
+      const images = form.imageUrl
+        ? [{ url: form.imageUrl, publicId: form.imagePublicId || undefined }]
+        : [];
+
       const payload = {
         name: form.name,
         sku: form.sku,
@@ -142,7 +160,7 @@ export default function AdminProductsPage() {
         description: form.description || null,
         shortDescription: form.shortDescription || null,
         categoryIds: form.categoryIds,
-        imageUrls: form.imageUrl ? [form.imageUrl] : [],
+        images,
       };
 
       if (editingProduct) {
@@ -195,7 +213,7 @@ export default function AdminProductsPage() {
   }
 
   async function handleDelete(id: string) {
-    if (!confirm("هل أنت متأكد من حذف هذا المنتج؟")) return;
+    if (!confirm("هل أنت متأكد من حذف هذا المنتج؟ سيتم نقله إلى سلة المحذوفات.")) return;
     try {
       const res = await fetch(`/api/admin/products/${id}`, { method: "DELETE" });
       const d = await res.json();
@@ -209,6 +227,8 @@ export default function AdminProductsPage() {
       toast.error("حدث خطأ أثناء حذف المنتج");
     }
   }
+
+  const topLevelCategories = categories.filter((c) => !c.parentId);
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -304,7 +324,9 @@ export default function AdminProductsPage() {
               <SingleImageUpload
                 value={form.imageUrl}
                 onChange={(url) => setForm({ ...form, imageUrl: url || "" })}
+                onPublicId={(pid) => setForm((prev) => ({ ...prev, imagePublicId: pid || "" }))}
                 entityType="product"
+                entityId={editingProduct?.id}
                 folder="products"
               />
             </div>
@@ -329,6 +351,42 @@ export default function AdminProductsPage() {
                 rows={3}
                 className="w-full rounded-xl border border-input bg-background px-4 py-3 text-sm shadow-sm"
               />
+            </div>
+
+            <div className="sm:col-span-3">
+              <label className="mb-2 block text-sm font-semibold">الفئات</label>
+              {topLevelCategories.length === 0 ? (
+                <p className="text-xs text-muted-foreground">لا توجد فئات متاحة</p>
+              ) : (
+                <div className="space-y-2">
+                  {topLevelCategories.map((cat) => (
+                    <div key={cat.id}>
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={form.categoryIds.includes(cat.id)}
+                          onChange={() => toggleCategory(cat.id)}
+                          className="h-4 w-4 rounded border-input accent-primary"
+                        />
+                        <span className="text-sm font-medium">{cat.name}</span>
+                      </label>
+                      {categories
+                        .filter((c) => c.parentId === cat.id)
+                        .map((child) => (
+                          <label key={child.id} className="flex items-center gap-2 cursor-pointer ml-6">
+                            <input
+                              type="checkbox"
+                              checked={form.categoryIds.includes(child.id)}
+                              onChange={() => toggleCategory(child.id)}
+                              className="h-4 w-4 rounded border-input accent-primary"
+                            />
+                            <span className="text-sm text-muted-foreground">{child.name}</span>
+                          </label>
+                        ))}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 
@@ -389,7 +447,7 @@ export default function AdminProductsPage() {
                 <th className="px-5 py-3.5 text-right text-xs font-bold uppercase tracking-wider text-muted-foreground/60">السعر</th>
                 <th className="px-5 py-3.5 text-right text-xs font-bold uppercase tracking-wider text-muted-foreground/60">المخزون</th>
                 <th className="px-5 py-3.5 text-right text-xs font-bold uppercase tracking-wider text-muted-foreground/60">الحالة</th>
-                <th className="px-5 py-3.5 text-right text-xs font-bold uppercase tracking-wider text-muted-foreground/60">الطلبات</th>
+                <th className="px-5 py-3.5 text-right text-xs font-bold uppercase tracking-wider text-muted-foreground/60">الفئات</th>
                 <th className="px-5 py-3.5 text-right text-xs font-bold uppercase tracking-wider text-muted-foreground/60">إجراءات</th>
               </tr>
             </thead>
@@ -437,7 +495,11 @@ export default function AdminProductsPage() {
                       {STATUS_LABELS[product.status]}
                     </span>
                   </td>
-                  <td className="px-5 py-3.5 text-muted-foreground/70 font-medium">{product._count.orderItems}</td>
+                  <td className="px-5 py-3.5 text-muted-foreground/70 text-xs">
+                    {product.categories.length > 0
+                      ? product.categories.map((c) => c.category.name).join(", ")
+                      : "—"}
+                  </td>
                   <td className="px-5 py-3.5">
                     <div className="flex items-center gap-1.5">
                       <Button variant="ghost" size="xs" onClick={() => handleOpenEdit(product)}>

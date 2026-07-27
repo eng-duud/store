@@ -48,7 +48,12 @@ export async function POST(request: NextRequest) {
       status: body.status || "ACTIVE",
       isFeatured: Boolean(body.isFeatured),
       categoryIds: Array.isArray(body.categoryIds) ? body.categoryIds : [],
-      imageUrls: Array.isArray(body.imageUrls) ? body.imageUrls : [],
+      images: Array.isArray(body.images) && body.images.length > 0
+        ? body.images.map((img: any) => ({
+            url: typeof img === "string" ? img : img.url,
+            publicId: typeof img === "object" ? img.publicId || undefined : undefined,
+          }))
+        : Array.isArray(body.imageUrls) ? body.imageUrls : [],
     });
 
     await createAuditLog({
