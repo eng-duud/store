@@ -77,7 +77,7 @@ function StatCard({ label, value, sub, icon, color }: { label: string; value: st
 }
 
 // ─── Financial Trend Chart ────────────────────────────────────────────────────
-function FinancialTrendChart({ data, currencySymbol }: { data: { date: string; revenue: number; expense: number; net: number }[]; currencySymbol: string }) {
+function FinancialTrendChart({ data }: { data: { date: string; revenue: number; expense: number; net: number }[] }) {
   if (!data || data.length === 0) return <div className="flex items-center justify-center h-32 text-xs text-muted-foreground">لا توجد بيانات</div>;
 
   const maxVal = Math.max(...data.flatMap((d) => [d.revenue, d.expense]), 1);
@@ -94,12 +94,12 @@ function FinancialTrendChart({ data, currencySymbol }: { data: { date: string; r
             <div key={i} className="flex flex-col items-center gap-0.5 group relative">
               <div className="flex items-end gap-0.5" style={{ height: chartH }}>
                 <div
-                  title={`إيرادات: ${fmt(item.revenue)} ${currencySymbol}`}
+                  title={`إيرادات: ${fmt(item.revenue)}`}
                   style={{ height: rH, width: barW / 2 }}
                   className="rounded-t-sm bg-emerald-500/80 hover:bg-emerald-500 transition-colors cursor-pointer"
                 />
                 <div
-                  title={`مصاريف: ${fmt(item.expense)} ${currencySymbol}`}
+                  title={`مصاريف: ${fmt(item.expense)}`}
                   style={{ height: eH, width: barW / 2 }}
                   className="rounded-t-sm bg-red-400/70 hover:bg-red-500 transition-colors cursor-pointer"
                 />
@@ -120,7 +120,7 @@ function FinancialTrendChart({ data, currencySymbol }: { data: { date: string; r
 }
 
 // ─── Expense Category Bars ────────────────────────────────────────────────────
-function CategoryBars({ data, currencySymbol }: { data: { category: string; amount: number }[]; currencySymbol: string }) {
+function CategoryBars({ data }: { data: { category: string; amount: number }[] }) {
   if (!data || data.length === 0) return <div className="text-xs text-muted-foreground text-center py-4">لا توجد مصاريف</div>;
   const max = Math.max(...data.map((d) => d.amount), 1);
   return (
@@ -129,7 +129,7 @@ function CategoryBars({ data, currencySymbol }: { data: { category: string; amou
         <div key={item.category} className="space-y-1">
           <div className="flex items-center justify-between text-xs">
             <span className="font-medium">{item.category}</span>
-            <span className="text-muted-foreground">{fmt(item.amount)} {currencySymbol}</span>
+            <span className="text-muted-foreground">{fmt(item.amount)}</span>
           </div>
           <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
             <div
@@ -450,10 +450,10 @@ export default function AdminAccountingPage() {
       ) : summary && (
         <>
           <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-            <StatCard label="إجمالي الإيرادات" value={`${fmt(summary.totalRevenue)} ${settings.currencySymbol}`} icon="💰" color="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" />
-            <StatCard label="إجمالي المصاريف" value={`${fmt(summary.totalExpenses)} ${settings.currencySymbol}`} icon="💸" color="bg-red-500/10 text-red-600 dark:text-red-400" />
-            <StatCard label="صافي الربح" value={`${fmt(summary.netProfit)} ${settings.currencySymbol}`} icon={summary.netProfit >= 0 ? "📈" : "📉"} color={summary.netProfit >= 0 ? "bg-blue-500/10 text-blue-600 dark:text-blue-400" : "bg-orange-500/10 text-orange-600 dark:text-orange-400"} sub={`هامش الربح: ${summary.profitMarginPercentage}%`} />
-            <StatCard label="المركز النقدي" value={`${fmt(summary.netCashPosition)} ${settings.currencySymbol}`} icon="🏦" color="bg-purple-500/10 text-purple-600 dark:text-purple-400" />
+            <StatCard label="إجمالي الإيرادات" value={`${fmt(summary.totalRevenue)}`} icon="💰" color="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" />
+            <StatCard label="إجمالي المصاريف" value={`${fmt(summary.totalExpenses)}`} icon="💸" color="bg-red-500/10 text-red-600 dark:text-red-400" />
+            <StatCard label="صافي الربح" value={`${fmt(summary.netProfit)}`} icon={summary.netProfit >= 0 ? "📈" : "📉"} color={summary.netProfit >= 0 ? "bg-blue-500/10 text-blue-600 dark:text-blue-400" : "bg-orange-500/10 text-orange-600 dark:text-orange-400"} sub={`هامش الربح: ${summary.profitMarginPercentage}%`} />
+            <StatCard label="المركز النقدي" value={`${fmt(summary.netCashPosition)}`} icon="🏦" color="bg-purple-500/10 text-purple-600 dark:text-purple-400" />
           </div>
 
           {/* Charts Row */}
@@ -462,7 +462,7 @@ export default function AdminAccountingPage() {
             <div className="lg:col-span-2 rounded-2xl border bg-card shadow-card p-6">
               <h2 className="font-semibold text-base mb-4">الحركة المالية</h2>
               {summary.financialTrend.length > 0 ? (
-                <FinancialTrendChart data={summary.financialTrend} currencySymbol={settings.currencySymbol} />
+                <FinancialTrendChart data={summary.financialTrend} />
               ) : (
                 <div className="flex items-center justify-center h-24 text-xs text-muted-foreground">لا توجد بيانات للفترة المحددة</div>
               )}
@@ -471,7 +471,7 @@ export default function AdminAccountingPage() {
             {/* Expenses by Category */}
             <div className="rounded-2xl border bg-card shadow-card p-6">
               <h2 className="font-semibold text-base mb-4">المصاريف بالتصنيف</h2>
-              <CategoryBars data={summary.expensesByCategory} currencySymbol={settings.currencySymbol} />
+              <CategoryBars data={summary.expensesByCategory} />
             </div>
           </div>
         </>
@@ -570,7 +570,7 @@ export default function AdminAccountingPage() {
                     </td>
                     <td className="px-4 py-3">{exp.description}</td>
                     <td className="px-4 py-3 font-semibold text-red-500 whitespace-nowrap">
-                      {fmt(Number(exp.amount))} {settings.currencySymbol}
+                      {fmt(Number(exp.amount))}
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
