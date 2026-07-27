@@ -284,9 +284,9 @@ export default function AdminReportsPage() {
         <div className="space-y-6">
           {/* KPI Cards */}
           <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-            <StatCard label="إجمالي الإيرادات" value={`${fmt(summaryData.totalRevenue)} ر.س`} icon="💰" color="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" sub={`متوسط الطلب: ${fmt(summaryData.averageOrderValue)} ر.س`} />
-            <StatCard label="إجمالي المصاريف" value={`${fmt(summaryData.totalExpenses)} ر.س`} icon="📉" color="bg-red-500/10 text-red-600 dark:text-red-400" />
-            <StatCard label="صافي الربح" value={`${fmt(summaryData.estimatedProfit)} ر.س`} icon="📊" color={summaryData.estimatedProfit >= 0 ? "bg-blue-500/10 text-blue-600 dark:text-blue-400" : "bg-orange-500/10 text-orange-600 dark:text-orange-400"} />
+            <StatCard label="إجمالي الإيرادات" value={`${fmt(summaryData.totalRevenue)}`} icon="💰" color="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" sub={`متوسط الطلب: ${fmt(summaryData.averageOrderValue)}`} />
+            <StatCard label="إجمالي المصاريف" value={`${fmt(summaryData.totalExpenses)}`} icon="📉" color="bg-red-500/10 text-red-600 dark:text-red-400" />
+            <StatCard label="صافي الربح" value={`${fmt(summaryData.estimatedProfit)}`} icon="📊" color={summaryData.estimatedProfit >= 0 ? "bg-blue-500/10 text-blue-600 dark:text-blue-400" : "bg-orange-500/10 text-orange-600 dark:text-orange-400"} />
             <StatCard label="إجمالي الطلبات" value={String(summaryData.allOrdersCount)} icon="📦" color="bg-purple-500/10 text-purple-600 dark:text-purple-400" sub={`مكتملة: ${summaryData.completedOrdersCount} | معلقة: ${summaryData.pendingOrdersCount}`} />
           </div>
 
@@ -319,7 +319,7 @@ export default function AdminReportsPage() {
                         <td className="px-4 py-3 text-muted-foreground">{i + 1}</td>
                         <td className="px-4 py-3 font-medium">{p.name}</td>
                         <td className="px-4 py-3">{p.totalQuantity}</td>
-                        <td className="px-4 py-3 font-semibold text-emerald-600">{fmt(p.totalSales)} ر.س</td>
+                        <td className="px-4 py-3 font-semibold text-emerald-600">{fmt(p.totalSales)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -334,9 +334,9 @@ export default function AdminReportsPage() {
       {!isLoading && activeTab === "sales" && salesData && (
         <div className="space-y-6">
           <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
-            <StatCard label="إجمالي المبيعات" value={`${fmt(salesData.totalSales)} ر.س`} icon="💵" color="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" />
+            <StatCard label="إجمالي المبيعات" value={`${fmt(salesData.totalSales)}`} icon="💵" color="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" />
             <StatCard label="عدد الطلبات" value={String(salesData.totalOrders)} icon="📦" color="bg-blue-500/10 text-blue-600 dark:text-blue-400" />
-            <StatCard label="متوسط قيمة الطلب" value={salesData.totalOrders > 0 ? `${fmt(salesData.totalSales / salesData.totalOrders)} ر.س` : "—"} icon="📐" color="bg-purple-500/10 text-purple-600 dark:text-purple-400" />
+            <StatCard label="متوسط قيمة الطلب" value={salesData.totalOrders > 0 ? `${fmt(salesData.totalSales / salesData.totalOrders)}` : "—"} icon="📐" color="bg-purple-500/10 text-purple-600 dark:text-purple-400" />
           </div>
 
           {/* Sales Trend */}
@@ -348,7 +348,7 @@ export default function AdminReportsPage() {
                 {salesData.salesTrend.slice(-6).map((item) => (
                   <div key={item.date} className="flex items-center justify-between rounded-lg bg-muted/30 px-3 py-2 text-xs">
                     <span className="text-muted-foreground">{new Date(item.date).toLocaleDateString("ar-SA", { month: "short", day: "numeric" })}</span>
-                    <span className="font-semibold">{fmt(item.revenue)} ر.س</span>
+                    <span className="font-semibold">{fmt(item.revenue)}</span>
                   </div>
                 ))}
               </div>
@@ -392,7 +392,7 @@ export default function AdminReportsPage() {
             <StatCard label="إجمالي المنتجات" value={String(productData.totalProducts)} icon="📦" color="bg-blue-500/10 text-blue-600 dark:text-blue-400" />
             <StatCard label="المنتجات النشطة" value={String(productData.activeProducts)} icon="✅" color="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" />
             <StatCard label="نفاذ المخزون" value={String(productData.outOfStock)} icon="❗" color="bg-red-500/10 text-red-600 dark:text-red-400" />
-            <StatCard label="قيمة المخزون" value={`${fmt(productData.totalInventoryValue)} ر.س`} icon="🏦" color="bg-amber-500/10 text-amber-600 dark:text-amber-400" />
+            <StatCard label="قيمة المخزون" value={`${fmt(productData.totalInventoryValue)}`} icon="🏦" color="bg-amber-500/10 text-amber-600 dark:text-amber-400" />
           </div>
 
           <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
@@ -424,7 +424,7 @@ export default function AdminReportsPage() {
                       <td className="px-4 py-3 text-muted-foreground">{i + 1}</td>
                       <td className="px-4 py-3 font-medium">{p.name}</td>
                       <td className="px-4 py-3 text-muted-foreground font-mono text-xs">{p.sku}</td>
-                      <td className="px-4 py-3">{fmt(p.price)} ر.س</td>
+                      <td className="px-4 py-3">{fmt(p.price)}</td>
                       <td className="px-4 py-3">
                         <Badge variant={p.stockQuantity <= 0 ? "destructive" : p.stockQuantity <= 10 ? "warning" : "success"}>
                           {p.stockQuantity}
@@ -469,7 +469,7 @@ export default function AdminReportsPage() {
                       <td className="px-4 py-3">
                         <Badge variant="secondary">{c.ordersCount}</Badge>
                       </td>
-                      <td className="px-4 py-3 font-semibold text-emerald-600">{fmt(c.totalSpent)} ر.س</td>
+                      <td className="px-4 py-3 font-semibold text-emerald-600">{fmt(c.totalSpent)}</td>
                     </tr>
                   ))}
                 </tbody>
