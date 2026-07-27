@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useSettings } from "@/hooks/use-settings";
+import { SingleImageUpload } from "@/components/shared/single-image-upload";
 
 interface CategoryOption {
   id: string;
@@ -299,13 +300,12 @@ export default function AdminProductsPage() {
             </div>
 
             <div className="sm:col-span-2">
-              <label className="mb-2 block text-sm font-semibold">رابط الصورة الرئيسية</label>
-              <input
-                type="text"
+              <label className="mb-2 block text-sm font-semibold">الصورة الرئيسية</label>
+              <SingleImageUpload
                 value={form.imageUrl}
-                onChange={(e) => setForm({ ...form, imageUrl: e.target.value })}
-                placeholder="https://example.com/product-image.jpg"
-                className="h-11 w-full rounded-xl border border-input bg-background px-4 text-sm shadow-sm"
+                onChange={(url) => setForm({ ...form, imageUrl: url || "" })}
+                entityType="product"
+                folder="products"
               />
             </div>
 

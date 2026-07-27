@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { SingleImageUpload } from "@/components/shared/single-image-upload";
 
 interface AdminCategory {
   id: string;
@@ -226,13 +227,12 @@ export default function AdminCategoriesPage() {
             </div>
 
             <div>
-              <label className="mb-2 block text-sm font-semibold">رابط صورة الفئة (Image URL)</label>
-              <input
-                type="text"
+              <label className="mb-2 block text-sm font-semibold">صورة الفئة</label>
+              <SingleImageUpload
                 value={form.imageId}
-                onChange={(e) => setForm({ ...form, imageId: e.target.value })}
-                placeholder="https://example.com/category-image.jpg"
-                className="h-11 w-full rounded-xl border border-input bg-background px-4 text-sm shadow-sm"
+                onChange={(url) => setForm({ ...form, imageId: url || "" })}
+                entityType="category"
+                folder="categories"
               />
             </div>
           </div>

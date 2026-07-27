@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { DEFAULT_STORE_SETTINGS, StoreSettingsData } from "@/services/settings.service";
+import { SingleImageUpload } from "@/components/shared/single-image-upload";
 
 type SettingTab = "general" | "branding" | "contact" | "social" | "business" | "legal" | "seo" | "theme";
 
@@ -208,78 +209,46 @@ export default function AdminSettingsPage() {
 
               <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                 <div className="space-y-3 rounded-xl border p-4 bg-background">
-                  <label className="block text-sm font-semibold">رابط الشعار الرئيسي (Header Logo)</label>
-                  <input
-                    type="text"
+                  <label className="block text-sm font-semibold">الشعار الرئيسي (Header Logo)</label>
+                  <SingleImageUpload
                     value={formData.logoUrl}
-                    onChange={(e) => handleChange("logoUrl", e.target.value)}
-                    placeholder="https://example.com/logo.png"
-                    className="h-11 w-full rounded-xl border border-input bg-card px-4 text-sm shadow-sm focus-visible:ring-2 focus-visible:ring-ring"
+                    onChange={(url) => handleChange("logoUrl", url || "")}
+                    entityType="setting"
+                    entityId="logoUrl"
+                    folder="settings/logos"
                   />
-                  {formData.logoUrl ? (
-                    <div className="flex items-center gap-3 pt-2">
-                      <div className="h-12 w-32 overflow-hidden rounded-lg border bg-muted p-1 flex items-center justify-center">
-                        <img src={formData.logoUrl} alt="Logo Preview" className="max-h-full max-w-full object-contain" />
-                      </div>
-                      <Button variant="outline" size="sm" onClick={() => handleChange("logoUrl", "")}>
-                        حذف الشعار
-                      </Button>
-                    </div>
-                  ) : (
-                    <p className="text-xs text-muted-foreground">في حالة عدم رفع شعار، سيتم عرض أول حرف من اسم المتجر</p>
-                  )}
                 </div>
 
                 <div className="space-y-3 rounded-xl border p-4 bg-background">
                   <label className="block text-sm font-semibold">شعار الوضع الداكن (Dark Mode Logo)</label>
-                  <input
-                    type="text"
+                  <SingleImageUpload
                     value={formData.darkLogoUrl}
-                    onChange={(e) => handleChange("darkLogoUrl", e.target.value)}
-                    placeholder="https://example.com/logo-dark.png"
-                    className="h-11 w-full rounded-xl border border-input bg-card px-4 text-sm shadow-sm focus-visible:ring-2 focus-visible:ring-ring"
+                    onChange={(url) => handleChange("darkLogoUrl", url || "")}
+                    entityType="setting"
+                    entityId="darkLogoUrl"
+                    folder="settings/logos"
                   />
-                  {formData.darkLogoUrl && (
-                    <div className="flex items-center gap-3 pt-2">
-                      <div className="h-12 w-32 overflow-hidden rounded-lg border bg-neutral-900 p-1 flex items-center justify-center">
-                        <img src={formData.darkLogoUrl} alt="Dark Logo Preview" className="max-h-full max-w-full object-contain" />
-                      </div>
-                      <Button variant="outline" size="sm" onClick={() => handleChange("darkLogoUrl", "")}>
-                        حذف
-                      </Button>
-                    </div>
-                  )}
                 </div>
 
                 <div className="space-y-3 rounded-xl border p-4 bg-background">
                   <label className="block text-sm font-semibold">شعار الفوتر (Footer Logo)</label>
-                  <input
-                    type="text"
+                  <SingleImageUpload
                     value={formData.footerLogoUrl}
-                    onChange={(e) => handleChange("footerLogoUrl", e.target.value)}
-                    placeholder="https://example.com/footer-logo.png"
-                    className="h-11 w-full rounded-xl border border-input bg-card px-4 text-sm shadow-sm focus-visible:ring-2 focus-visible:ring-ring"
+                    onChange={(url) => handleChange("footerLogoUrl", url || "")}
+                    entityType="setting"
+                    entityId="footerLogoUrl"
+                    folder="settings/logos"
                   />
-                  {formData.footerLogoUrl && (
-                    <div className="flex items-center gap-3 pt-2">
-                      <div className="h-12 w-32 overflow-hidden rounded-lg border bg-muted p-1 flex items-center justify-center">
-                        <img src={formData.footerLogoUrl} alt="Footer Logo Preview" className="max-h-full max-w-full object-contain" />
-                      </div>
-                      <Button variant="outline" size="sm" onClick={() => handleChange("footerLogoUrl", "")}>
-                        حذف
-                      </Button>
-                    </div>
-                  )}
                 </div>
 
                 <div className="space-y-3 rounded-xl border p-4 bg-background">
                   <label className="block text-sm font-semibold">أيقونة المتصفح (Favicon URL)</label>
-                  <input
-                    type="text"
+                  <SingleImageUpload
                     value={formData.faviconUrl}
-                    onChange={(e) => handleChange("faviconUrl", e.target.value)}
-                    placeholder="/favicon.ico"
-                    className="h-11 w-full rounded-xl border border-input bg-card px-4 text-sm shadow-sm focus-visible:ring-2 focus-visible:ring-ring"
+                    onChange={(url) => handleChange("faviconUrl", url || "")}
+                    entityType="setting"
+                    entityId="faviconUrl"
+                    folder="settings/favicons"
                   />
                 </div>
               </div>
@@ -607,13 +576,13 @@ export default function AdminSettingsPage() {
               </div>
 
               <div>
-                <label className="mb-2 block text-sm font-semibold">رابط صورة المشاركة (Open Graph Image URL)</label>
-                <input
-                  type="text"
+                <label className="mb-2 block text-sm font-semibold">صورة المشاركة (Open Graph Image)</label>
+                <SingleImageUpload
                   value={formData.ogImageUrl}
-                  onChange={(e) => handleChange("ogImageUrl", e.target.value)}
-                  placeholder="https://example.com/og.png"
-                  className="h-11 w-full rounded-xl border border-input bg-background px-4 text-sm shadow-sm"
+                  onChange={(url) => handleChange("ogImageUrl", url || "")}
+                  entityType="setting"
+                  entityId="ogImageUrl"
+                  folder="settings/og"
                 />
               </div>
             </div>

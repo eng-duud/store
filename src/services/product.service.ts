@@ -226,6 +226,9 @@ export interface CreateProductInput {
   isFeatured?: boolean;
   categoryIds?: string[];
   imageUrls?: string[];
+  images?: { url: string; publicId?: string; altText?: string; isPrimary?: boolean; sortOrder?: number }[];
+  brandId?: string;
+  lowStockThreshold?: number;
 }
 
 export async function createProduct(data: CreateProductInput) {
@@ -233,6 +236,24 @@ export async function createProduct(data: CreateProductInput) {
     .toLowerCase()
     .replace(/[^\w\s-]/g, "")
     .replace(/[\s_-]+/g, "-") + "-" + Date.now().toString().slice(-4);
+
+  const imageData = data.images
+    ? data.images.map((img, i) => ({
+        url: img.url,
+        publicId: img.publicId || null,
+        altText: img.altText || null,
+        isPrimary: img.isPrimary ?? i === 0,
+        sortOrder: img.sortOrder ?? i,
+      }))
+    : data.imageUrls
+    ? data.imageUrls.map((url, i) => ({
+        url,
+        publicId: null,
+        altText: null,
+        isPrimary: i === 0,
+        sortOrder: i,
+      }))
+    : undefined;
 
   const product = await prisma.product.create({
     data: {
@@ -245,16 +266,18 @@ export async function createProduct(data: CreateProductInput) {
       salePrice: data.salePrice || null,
       costPrice: data.costPrice || null,
       stockQuantity: data.stockQuantity,
+      lowStockThreshold: data.lowStockThreshold || 10,
       status: data.status || "ACTIVE",
       isFeatured: data.isFeatured || false,
+      brandId: data.brandId || null,
       categories: data.categoryIds && data.categoryIds.length > 0
         ? {
             create: data.categoryIds.map((categoryId) => ({ categoryId })),
           }
         : undefined,
-      images: data.imageUrls && data.imageUrls.length > 0
+      images: imageData
         ? {
-            create: data.imageUrls.map((url, i) => ({ url, sortOrder: i })),
+            create: imageData,
           }
         : undefined,
     },
@@ -269,9 +292,27 @@ export async function updateProduct(id: string, data: Partial<CreateProductInput
     await prisma.productCategory.deleteMany({ where: { productId: id } });
   }
 
-  if (data.imageUrls) {
+  if (data.imageUrls || data.images) {
     await prisma.productImage.deleteMany({ where: { productId: id } });
   }
+
+  const imageData = data.images
+    ? data.images.map((img, i) => ({
+        url: img.url,
+        publicId: img.publicId || null,
+        altText: img.altText || null,
+        isPrimary: img.isPrimary ?? i === 0,
+        sortOrder: img.sortOrder ?? i,
+      }))
+    : data.imageUrls
+    ? data.imageUrls.map((url, i) => ({
+        url,
+        publicId: null,
+        altText: null,
+        isPrimary: i === 0,
+        sortOrder: i,
+      }))
+    : undefined;
 
   return prisma.product.update({
     where: { id },
@@ -284,16 +325,18 @@ export async function updateProduct(id: string, data: Partial<CreateProductInput
       salePrice: data.salePrice,
       costPrice: data.costPrice,
       stockQuantity: data.stockQuantity,
+      lowStockThreshold: data.lowStockThreshold,
       status: data.status,
       isFeatured: data.isFeatured,
+      brandId: data.brandId,
       categories: data.categoryIds
         ? {
             create: data.categoryIds.map((categoryId) => ({ categoryId })),
           }
         : undefined,
-      images: data.imageUrls
+      images: imageData
         ? {
-            create: data.imageUrls.map((url, i) => ({ url, sortOrder: i })),
+            create: imageData,
           }
         : undefined,
     },
@@ -326,7 +369,14 @@ export async function duplicateProduct(id: string) {
     stockQuantity: original.stockQuantity,
     status: "DRAFT",
     isFeatured: false,
+    brandId: original.brandId || undefined,
     categoryIds: original.categories.map((c: any) => c.categoryId),
-    imageUrls: original.images.map((img: any) => img.url),
+    images: original.images.map((img: any) => ({
+      url: img.url,
+      publicId: img.publicId || undefined,
+      altText: img.altText || undefined,
+      isPrimary: img.isPrimary,
+      sortOrder: img.sortOrder,
+    })),
   });
 }

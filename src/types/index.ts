@@ -15,6 +15,30 @@ export interface PaginatedResponse<T> {
   totalPages: number;
 }
 
+export interface MediaAsset {
+  id: string;
+  publicId: string;
+  url: string;
+  secureUrl: string;
+  folder: string;
+  entityType: string;
+  entityId: string | null;
+  altText: string | null;
+  fileName: string | null;
+  mimeType: string | null;
+  format: string | null;
+  width: number | null;
+  height: number | null;
+  bytes: number | null;
+  version: number | null;
+  isPrimary: boolean;
+  sortOrder: number;
+  tags: string | null;
+  uploadedBy: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 export interface Product {
   id: string;
   name: string;
@@ -40,7 +64,9 @@ export interface Product {
 export interface ProductImage {
   id: string;
   url: string;
+  publicId: string | null;
   altText: string | null;
+  isPrimary: boolean;
   sortOrder: number;
 }
 
@@ -60,6 +86,7 @@ export interface Category {
   description: string | null;
   imageId: string | null;
   imageUrl?: string | null;
+  imageMediaId: string | null;
   parentId: string | null;
   parent?: Category;
   children?: Category[];
@@ -81,6 +108,7 @@ export interface Brand {
   name: string;
   slug: string;
   logoId: string | null;
+  logoMediaId: string | null;
   status: string;
   createdAt: Date;
   updatedAt: Date;
@@ -94,6 +122,7 @@ export interface User {
   role: UserRole;
   emailVerified: Date | null;
   image: string | null;
+  avatarMediaId: string | null;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
