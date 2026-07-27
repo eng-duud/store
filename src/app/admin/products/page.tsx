@@ -44,6 +44,8 @@ export default function AdminProductsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
+  const [subCategoryFilter, setSubCategoryFilter] = useState<string | null>(null);
 
   const { formatCurrency, settings } = useSettings();
 
@@ -65,11 +67,12 @@ export default function AdminProductsPage() {
     imagePublicId: "",
   });
 
-  function fetchProducts(q?: string, status?: string) {
+  function fetchProducts(q?: string, status?: string, categoryId?: string | null) {
     setIsLoading(true);
     const params = new URLSearchParams();
     if (q) params.set("q", q);
     if (status) params.set("status", status);
+    if (categoryId) params.set("categoryId", categoryId);
 
     fetch(`/api/admin/products?${params}`)
       .then((r) => r.json())
@@ -173,7 +176,7 @@ export default function AdminProductsPage() {
         if (d.success) {
           toast.success("تم تعديل المنتج بنجاح!");
           setShowForm(false);
-          fetchProducts(search, statusFilter);
+          fetchProducts(search, statusFilter, categoryFilter);
         } else {
           toast.error(d.error || "حدث خطأ أثناء تعديل المنتج");
         }
@@ -187,7 +190,7 @@ export default function AdminProductsPage() {
         if (d.success) {
           toast.success("تم إضافة المنتج بنجاح!");
           setShowForm(false);
-          fetchProducts(search, statusFilter);
+          fetchProducts(search, statusFilter, categoryFilter);
         } else {
           toast.error(d.error || "حدث خطأ أثناء إضافة المنتج");
         }
@@ -203,7 +206,7 @@ export default function AdminProductsPage() {
       const d = await res.json();
       if (d.success) {
         toast.success("تم نسخ المنتج بنجاح!");
-        fetchProducts(search, statusFilter);
+        fetchProducts(search, statusFilter, categoryFilter);
       } else {
         toast.error(d.error || "فشل تكرار المنتج");
       }
@@ -219,7 +222,7 @@ export default function AdminProductsPage() {
       const d = await res.json();
       if (d.success) {
         toast.success("تم حذف المنتج بنجاح!");
-        fetchProducts(search, statusFilter);
+        fetchProducts(search, statusFilter, categoryFilter);
       } else {
         toast.error(d.error || "فشل حذف المنتج");
       }
@@ -413,7 +416,7 @@ export default function AdminProductsPage() {
           value={statusFilter}
           onChange={(e) => {
             setStatusFilter(e.target.value);
-            fetchProducts(search, e.target.value);
+            fetchProducts(search, e.target.value, categoryFilter);
           }}
           className="h-11 rounded-xl border border-input bg-card px-3 text-sm shadow-card"
         >
@@ -422,10 +425,88 @@ export default function AdminProductsPage() {
           <option value="DRAFT">مسودة</option>
           <option value="ARCHIVED">مؤرشف</option>
         </select>
-        <Button onClick={() => fetchProducts(search, statusFilter)} className="rounded-xl px-6">
+        <Button onClick={() => fetchProducts(search, statusFilter, categoryFilter)} className="rounded-xl px-6">
           بحث
         </Button>
       </div>
+
+      {topLevelCategories.length > 0 && (
+        <div className="space-y-3">
+          <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-hide">
+            <button
+              onClick={() => { setCategoryFilter(null); setSubCategoryFilter(null); fetchProducts(search, statusFilter, null); }}
+              className={`flex flex-col items-center gap-1.5 flex-shrink-0 transition-all ${
+                !categoryFilter ? "opacity-100" : "opacity-50 hover:opacity-80"
+              }`}
+            >
+              <div className={`h-12 w-12 rounded-full flex items-center justify-center text-sm font-bold transition-all ${
+                !categoryFilter ? "bg-primary text-primary-foreground shadow-lg scale-110" : "bg-muted text-muted-foreground"
+              }`}>
+                الكل
+              </div>
+            </button>
+            {topLevelCategories.map((cat) => {
+              const colors = ["bg-emerald-500", "bg-blue-500", "bg-purple-500", "bg-amber-500", "bg-rose-500", "bg-cyan-500", "bg-indigo-500", "bg-pink-500"];
+              const colorIndex = topLevelCategories.indexOf(cat) % colors.length;
+              const isActive = categoryFilter === cat.id;
+              const childCount = categories.filter((c) => c.parentId === cat.id).length;
+              return (
+                <button
+                  key={cat.id}
+                  onClick={() => {
+                    const newFilter = isActive ? null : cat.id;
+                    setCategoryFilter(newFilter);
+                    setSubCategoryFilter(null);
+                    fetchProducts(search, statusFilter, newFilter);
+                  }}
+                  className="flex flex-col items-center gap-1.5 flex-shrink-0 transition-all"
+                >
+                  <div className={`h-12 w-12 rounded-full flex items-center justify-center text-sm font-bold text-white transition-all ${
+                    isActive ? `${colors[colorIndex]} shadow-lg scale-110` : `${colors[colorIndex]}/60 hover:${colors[colorIndex]}`
+                  }`}>
+                    {cat.name.charAt(0)}
+                  </div>
+                  <span className={`text-[10px] font-medium max-w-[60px] truncate ${isActive ? "text-foreground" : "text-muted-foreground"}`}>
+                    {cat.name}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
+          {categoryFilter && (() => {
+            const children = categories.filter((c) => c.parentId === categoryFilter);
+            if (children.length === 0) return null;
+            return (
+              <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide border-t border-dashed pt-2">
+                <button
+                  onClick={() => { setSubCategoryFilter(null); fetchProducts(search, statusFilter, categoryFilter); }}
+                  className={`flex-shrink-0 rounded-full px-3 py-1 text-xs font-medium transition-all ${
+                    !subCategoryFilter ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/80"
+                  }`}
+                >
+                  الكل
+                </button>
+                {children.map((child) => (
+                  <button
+                    key={child.id}
+                    onClick={() => {
+                      const newSub = subCategoryFilter === child.id ? null : child.id;
+                      setSubCategoryFilter(newSub);
+                      fetchProducts(search, statusFilter, newSub || categoryFilter);
+                    }}
+                    className={`flex-shrink-0 rounded-full px-3 py-1 text-xs font-medium transition-all ${
+                      subCategoryFilter === child.id ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/80"
+                    }`}
+                  >
+                    {child.name}
+                  </button>
+                ))}
+              </div>
+            );
+          })()}
+        </div>
+      )}
 
       {isLoading ? (
         <div className="space-y-3">

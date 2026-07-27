@@ -11,6 +11,7 @@ export async function GET(request: NextRequest) {
     const result = await getAdminProducts({
       search: searchParams.get("q") || undefined,
       status: searchParams.get("status") || undefined,
+      categoryId: searchParams.get("categoryId") || undefined,
       page: Number(searchParams.get("page")) || 1,
       limit: 20,
     });
