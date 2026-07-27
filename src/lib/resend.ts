@@ -35,7 +35,7 @@ export async function sendOrderConfirmation(
       <div dir="rtl" style="font-family: Arial, sans-serif; padding: 20px;">
         <h2>تم استلام طلبك بنجاح</h2>
         <p>رقم الطلب: <strong>${orderNumber}</strong></p>
-        <p>المبلغ الإجمالي: <strong>${total.toFixed(2)} ر.س</strong></p>
+        <p>المبلغ الإجمالي: <strong>${Math.round(total)} ر.س</strong></p>
         <p>سنتواصل معك قريباً لتوصيل طلبك.</p>
         <hr style="margin: 20px 0;" />
         <p style="color: #666; font-size: 12px;">شكلاً لتسوقك من متجرنا</p>

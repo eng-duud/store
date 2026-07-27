@@ -12,8 +12,8 @@ export function formatCurrency(
 ): string {
   const num = typeof amount === "string" ? parseFloat(amount) || 0 : amount;
   const formatted = num.toLocaleString("ar-SA", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
   });
   return position === "left"
     ? `${currencySymbol} ${formatted}`

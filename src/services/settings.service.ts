@@ -138,7 +138,7 @@ export function formatCurrency(amount: number | string, settings?: Partial<Store
   const num = typeof amount === "string" ? parseFloat(amount) || 0 : amount;
   const symbol = settings?.currencySymbol || DEFAULT_STORE_SETTINGS.currencySymbol;
   const position = settings?.currencyPosition || DEFAULT_STORE_SETTINGS.currencyPosition;
-  const formatted = num.toLocaleString("ar-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const formatted = num.toLocaleString("ar-SA", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 
   return position === "left" ? `${symbol} ${formatted}` : `${formatted} ${symbol}`;
 }

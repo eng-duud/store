@@ -77,7 +77,7 @@ const PAYMENT_MAP: Record<string, string> = {
 };
 
 function fmtFallback(n: number) {
-  return n.toLocaleString("ar-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return n.toLocaleString("ar-SA", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 }
 
 // ─── Mini Bar Chart Component ─────────────────────────────────────────────────

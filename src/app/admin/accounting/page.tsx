@@ -56,7 +56,7 @@ const CATEGORY_COLORS = [
 ];
 
 let _fmtCurrency: (n: number) => string = (n) =>
-  n.toLocaleString("ar-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  n.toLocaleString("ar-SA", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 function fmt(n: number) {
   return _fmtCurrency(n);
 }
