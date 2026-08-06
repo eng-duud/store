@@ -68,12 +68,16 @@ export function ProductCard({ product, className }: ProductCardProps) {
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
         
-        <div className="absolute top-3 right-3 flex flex-col gap-1">
-          {hasDiscount && <Badge variant="destructive">خصم</Badge>}
+        <div className="absolute top-3 right-3 flex flex-col gap-1 z-10">
+          {hasDiscount && (
+            <Badge variant="destructive" className="shadow-sm font-bold">
+              -{Math.round(((Number(product.price) - Number(product.salePrice)) / Number(product.price)) * 100)}%
+            </Badge>
+          )}
         </div>
 
-        <div className="absolute top-3 left-3 flex flex-col gap-1">
-          {product.isFeatured && <Badge variant="warning">مميز</Badge>}
+        <div className="absolute top-3 left-3 flex flex-col gap-1 z-10">
+          {product.isFeatured && <Badge variant="warning" className="shadow-sm">مميز</Badge>}
         </div>
       </Link>
 
@@ -85,7 +89,7 @@ export function ProductCard({ product, className }: ProductCardProps) {
         )}
 
         <Link href={`/products/${product.slug}`}>
-          <h3 className="mb-1 line-clamp-1 text-sm font-bold transition-colors duration-200 hover:text-primary">
+          <h3 className="mb-1.5 line-clamp-1 text-sm font-bold transition-colors duration-200 hover:text-primary">
             {product.name}
           </h3>
         </Link>
@@ -96,10 +100,10 @@ export function ProductCard({ product, className }: ProductCardProps) {
           </p>
         )}
 
-        <div className="mt-auto pt-2 flex items-center justify-between gap-2">
+        <div className="mt-auto pt-2 flex items-center justify-between gap-2 border-t border-border/40">
           <div>
-            <div className="flex items-center gap-1.5">
-              <span className="text-base font-bold tracking-tight text-foreground">
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-base font-extrabold tracking-tight text-foreground">
                 {formatCurrency(displayPrice)}
               </span>
               {hasDiscount && (
@@ -109,14 +113,14 @@ export function ProductCard({ product, className }: ProductCardProps) {
               )}
             </div>
             {isOutOfStock && (
-              <p className="text-[11px] font-semibold text-destructive mt-0.5">غير متوفر</p>
+              <p className="text-[11px] font-semibold text-destructive mt-0.5">نفدت الكمية</p>
             )}
           </div>
 
           <button
             onClick={handleAddToCart}
             disabled={isOutOfStock}
-            className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm transition-all duration-200 hover:bg-primary/90 hover:shadow-md active:scale-95 disabled:opacity-40 disabled:pointer-events-none"
+            className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm transition-all duration-200 hover:bg-primary/90 hover:shadow-md active:scale-95 disabled:opacity-40 disabled:pointer-events-none cursor-pointer"
             title="إضافة للسلة"
             aria-label="إضافة للسلة"
           >

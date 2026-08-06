@@ -2,6 +2,7 @@ import prisma from "@/lib/prisma";
 import type { ProductFilters, PaginatedResponse } from "@/types";
 import type { Prisma } from "@prisma/client";
 import { deleteFromCloudinary } from "@/lib/cloudinary";
+import { slugify } from "@/lib/utils";
 
 function buildProductWhere(filters: ProductFilters): any {
   const where: any = {
@@ -246,10 +247,7 @@ export interface CreateProductInput {
 }
 
 export async function createProduct(data: CreateProductInput) {
-  const slug = data.name
-    .toLowerCase()
-    .replace(/[^\w\s-]/g, "")
-    .replace(/[\s_-]+/g, "-") + "-" + Date.now().toString().slice(-4);
+  const slug = `${slugify(data.name)}-${Date.now().toString().slice(-4)}`;
 
   const imageData = data.images
     ? data.images.map((img, i) => ({

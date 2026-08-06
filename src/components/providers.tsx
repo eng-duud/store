@@ -5,6 +5,8 @@ import { SessionProvider } from "next-auth/react";
 import { useState } from "react";
 import type { Session } from "next-auth";
 
+import { ThemeColorInjector } from "@/components/theme-color-injector";
+
 export function Providers({
   children,
   session,
@@ -26,7 +28,10 @@ export function Providers({
 
   return (
     <SessionProvider session={session}>
-      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+      <QueryClientProvider client={queryClient}>
+        <ThemeColorInjector />
+        {children}
+      </QueryClientProvider>
     </SessionProvider>
   );
 }

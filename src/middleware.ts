@@ -7,6 +7,21 @@ export default auth((req) => {
   const { pathname } = req.nextUrl;
   const session = req.auth;
 
+  if (pathname.startsWith("/api/admin")) {
+    if (!session) {
+      return Response.json(
+        { success: false, error: "Unauthorized access" },
+        { status: 401 }
+      );
+    }
+    if (session.user?.role !== "ADMIN" && session.user?.role !== "EMPLOYEE") {
+      return Response.json(
+        { success: false, error: "Forbidden: Admin or Employee role required" },
+        { status: 403 }
+      );
+    }
+  }
+
   if (pathname.startsWith("/admin")) {
     if (!session) {
       const loginUrl = new URL("/login", req.url);
@@ -32,5 +47,11 @@ export default auth((req) => {
 });
 
 export const config = {
-  matcher: ["/admin/:path*", "/account/:path*", "/orders/:path*", "/checkout"],
+  matcher: [
+    "/admin/:path*",
+    "/api/admin/:path*",
+    "/account/:path*",
+    "/orders/:path*",
+    "/checkout",
+  ],
 };

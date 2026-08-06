@@ -3,6 +3,7 @@ import { requireAdmin } from "@/lib/admin";
 import { getAdminCategories } from "@/services/category.service";
 import prisma from "@/lib/prisma";
 import { categorySchema } from "@/lib/validations";
+import { slugify } from "@/lib/utils";
 
 export async function GET() {
   try {
@@ -31,10 +32,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const slug = parsed.data.name
-      .toLowerCase()
-      .replace(/[^\w\s-]/g, "")
-      .replace(/[\s_-]+/g, "-");
+    const slug = slugify(parsed.data.name);
 
     const category = await prisma.category.create({
       data: { ...parsed.data, slug },

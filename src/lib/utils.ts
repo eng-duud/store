@@ -6,14 +6,14 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function formatCurrency(
-  amount: number,
+  amount: number | string,
   currencySymbol = "ر.س",
   position: "left" | "right" = "right"
 ): string {
-  const num = typeof amount === "string" ? parseFloat(amount) || 0 : amount;
+  const num = typeof amount === "string" ? parseFloat(amount) || 0 : (typeof amount === "number" ? amount : 0);
   const formatted = num.toLocaleString("ar-SA", {
     minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
+    maximumFractionDigits: 2,
   });
   return position === "left"
     ? `${currencySymbol} ${formatted}`
@@ -39,11 +39,17 @@ export function formatDateTime(date: Date | string): string {
 }
 
 export function slugify(text: string): string {
-  return text
+  const cleaned = text
+    .trim()
     .toLowerCase()
-    .replace(/[^\w\s-]/g, "")
+    .replace(/[^\w\s\u0600-\u06FF-]/g, "")
     .replace(/[\s_-]+/g, "-")
     .replace(/^-+|-+$/g, "");
+
+  if (!cleaned) {
+    return `item-${Date.now()}`;
+  }
+  return cleaned;
 }
 
 export function generateOrderNumber(): string {

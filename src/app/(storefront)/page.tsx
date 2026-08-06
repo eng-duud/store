@@ -6,15 +6,28 @@ import { ProductGridSkeleton } from "@/components/shared/skeletons";
 import { useFeaturedProducts, useCategories } from "@/hooks/use-products";
 import { Button } from "@/components/ui/button";
 
+import { CategoryNav } from "@/components/product/category-nav";
+import { useRouter } from "next/navigation";
+
 export default function HomePage() {
+  const router = useRouter();
   const { data: featuredProducts, isLoading: productsLoading } = useFeaturedProducts();
-  const { data: categories, isLoading: categoriesLoading } = useCategories();
+
+  const handleSelectCategory = (catSlug?: string, subSlug?: string) => {
+    if (!catSlug) {
+      router.push("/products");
+    } else if (subSlug) {
+      router.push(`/categories/${catSlug}?sub=${subSlug}`);
+    } else {
+      router.push(`/categories/${catSlug}`);
+    }
+  };
 
   return (
     <>
       <section className="relative overflow-hidden">
         <div className="gradient-surface absolute inset-0 opacity-80" />
-        <div className="relative mx-auto max-w-7xl px-4 py-20 sm:py-28 lg:px-8 lg:py-36">
+        <div className="relative mx-auto max-w-7xl px-4 py-16 sm:py-24 lg:px-8 lg:py-28">
           <div className="mx-auto max-w-3xl text-center animate-fade-in">
             <div className="mb-6 inline-flex items-center gap-2 rounded-full border bg-card/80 px-4 py-1.5 text-xs font-semibold text-muted-foreground shadow-card backdrop-blur-sm">
               <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
@@ -32,7 +45,7 @@ export default function HomePage() {
             </p>
             <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
               <Link href="/products" className="w-full sm:w-auto">
-                <Button size="xl" className="w-full sm:w-auto rounded-2xl px-10">
+                <Button size="xl" className="w-full sm:w-auto rounded-2xl px-10 shadow-lg">
                   تصفح كافة المنتجات
                 </Button>
               </Link>
@@ -46,66 +59,21 @@ export default function HomePage() {
         </div>
       </section>
 
-      {categories && categories.length > 0 && (
-        <section className="mx-auto max-w-7xl px-4 py-12 lg:px-8">
-          <div className="mb-8 flex items-end justify-between">
-            <div>
-              <h2 className="text-2xl font-bold tracking-tight">الفئات الرئيسية</h2>
-              <p className="mt-1 text-sm text-muted-foreground">تصفح التشكيلات حسب تصنيف الفئة</p>
-            </div>
-            <Link
-              href="/categories"
-              className="text-sm font-bold text-primary transition-colors hover:text-primary/80"
-            >
-              عرض جميع الفئات &rarr;
-            </Link>
+      <section className="mx-auto max-w-7xl px-4 py-8 lg:px-8">
+        <div className="mb-4 flex items-end justify-between">
+          <div>
+            <h2 className="text-2xl font-bold tracking-tight">الفئات الرئيسية</h2>
+            <p className="mt-1 text-sm text-muted-foreground">اختر الفئة للتصفح والفلترة السريعة</p>
           </div>
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
-            {categoriesLoading
-              ? Array.from({ length: 6 }).map((_, i) => (
-                  <div key={i} className="animate-pulse overflow-hidden rounded-2xl border bg-card p-4 shadow-card">
-                    <div className="mb-3 aspect-square rounded-xl bg-muted" />
-                    <div className="h-4 w-3/4 rounded-md bg-muted" />
-                  </div>
-                ))
-              : categories.map(
-                  (cat: { id: string; name: string; slug: string; _count: { products: number } }) => (
-                    <Link
-                      key={cat.id}
-                      href={`/categories/${cat.slug}`}
-                      className="group overflow-hidden rounded-2xl border bg-card p-4 shadow-card transition-all duration-300 hover:shadow-hover hover:-translate-y-1"
-                    >
-                      <div className="aspect-square rounded-xl bg-gradient-to-br from-primary/10 to-accent/30 flex items-center justify-center mb-3">
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          width="32"
-                          height="32"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="1.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          className="text-primary transition-transform duration-300 group-hover:scale-110"
-                        >
-                          <path d="M12 2H2v10h10V2Z" />
-                          <path d="M12 12H2v10h10V12Z" />
-                          <path d="M22 2h-6v6h6V2Z" />
-                          <path d="M22 12h-6v6h6v-6Z" />
-                        </svg>
-                      </div>
-                      <h3 className="text-sm font-bold group-hover:text-primary transition-colors line-clamp-1">
-                        {cat.name}
-                      </h3>
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        {cat._count?.products || 0} منتج
-                      </p>
-                    </Link>
-                  )
-                )}
-          </div>
-        </section>
-      )}
+          <Link
+            href="/categories"
+            className="text-sm font-bold text-primary transition-colors hover:text-primary/80"
+          >
+            عرض جميع الفئات &rarr;
+          </Link>
+        </div>
+        <CategoryNav onSelectCategory={handleSelectCategory} />
+      </section>
 
       <section className="mx-auto max-w-7xl px-4 py-16 lg:px-8">
         <div className="mb-8 flex items-end justify-between">
