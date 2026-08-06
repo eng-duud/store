@@ -15,9 +15,11 @@ export function Hero3DBackground() {
 
     const width = container.clientWidth;
     const height = container.clientHeight;
+    const isMobile = window.innerWidth < 768;
 
     const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
-    camera.position.set(0, 0, 9);
+    // Camera further back on mobile for smaller, perfectly framed 3D objects
+    camera.position.set(0, 0, isMobile ? 12 : 9);
 
     const renderer = new THREE.WebGLRenderer({
       alpha: true,
@@ -44,13 +46,14 @@ export function Hero3DBackground() {
     purpleLight.position.set(5, -2, 4);
     scene.add(purpleLight);
 
-    // 3. Root Group for Parallax
+    // 3. Root Group with Responsive Mobile Scale
     const rootGroup = new THREE.Group();
+    rootGroup.scale.setScalar(isMobile ? 0.55 : 1.0);
     scene.add(rootGroup);
 
     // ─── PRODUCT 1: SMARTPHONE (Top Left) ─────────────────
     const phoneGroup = new THREE.Group();
-    phoneGroup.position.set(-3.2, 0.8, -0.5);
+    phoneGroup.position.set(isMobile ? -1.8 : -3.2, isMobile ? 1.4 : 0.8, -0.5);
     phoneGroup.rotation.set(0.2, 0.4, -0.1);
 
     const phoneMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.85, roughness: 0.15 });
@@ -72,7 +75,7 @@ export function Hero3DBackground() {
 
     // ─── PRODUCT 2: HEADPHONES (Top Right) ────────────────
     const headphonesGroup = new THREE.Group();
-    headphonesGroup.position.set(3.2, 0.9, -0.5);
+    headphonesGroup.position.set(isMobile ? 1.8 : 3.2, isMobile ? 1.4 : 0.9, -0.5);
     headphonesGroup.rotation.set(-0.2, -0.4, 0.1);
 
     const earCupMat = new THREE.MeshStandardMaterial({ color: 0x18181b, metalness: 0.75, roughness: 0.2 });
@@ -104,7 +107,7 @@ export function Hero3DBackground() {
 
     // ─── PRODUCT 3: BEAUTY BOTTLE (Bottom Left) ───────────
     const beautyGroup = new THREE.Group();
-    beautyGroup.position.set(-2.4, -1.8, 0.2);
+    beautyGroup.position.set(isMobile ? -1.5 : -2.4, isMobile ? -1.5 : -1.8, 0.2);
     beautyGroup.rotation.set(0.1, 0.3, 0.15);
 
     const glassMat = new THREE.MeshPhysicalMaterial({
@@ -138,7 +141,7 @@ export function Hero3DBackground() {
 
     // ─── PRODUCT 4: SMART WATCH (Bottom Right) ────────────
     const watchGroup = new THREE.Group();
-    watchGroup.position.set(2.4, -1.8, 0.2);
+    watchGroup.position.set(isMobile ? 1.5 : 2.4, isMobile ? -1.5 : -1.8, 0.2);
     watchGroup.rotation.set(-0.15, -0.3, -0.1);
 
     const watchBody = new THREE.Mesh(
@@ -165,7 +168,7 @@ export function Hero3DBackground() {
     rootGroup.add(watchGroup);
 
     // ─── 5. FLOATING PARTICLE FIELD ───────────────────────
-    const particleCount = 300;
+    const particleCount = isMobile ? 150 : 300;
     const particlesGeo = new THREE.BufferGeometry();
     const posArray = new Float32Array(particleCount * 3);
 
@@ -177,7 +180,7 @@ export function Hero3DBackground() {
 
     particlesGeo.setAttribute("position", new THREE.BufferAttribute(posArray, 3));
     const particlesMat = new THREE.PointsMaterial({
-      size: 0.045,
+      size: isMobile ? 0.035 : 0.045,
       color: 0x60a5fa,
       transparent: true,
       opacity: 0.65,
@@ -196,7 +199,17 @@ export function Hero3DBackground() {
       mouseY = (e.clientY - windowHalfY) / windowHalfY;
     };
 
+    const handleTouchMove = (e: TouchEvent) => {
+      if (e.touches.length > 0) {
+        const windowHalfX = window.innerWidth / 2;
+        const windowHalfY = window.innerHeight / 2;
+        mouseX = (e.touches[0].clientX - windowHalfX) / windowHalfX;
+        mouseY = (e.touches[0].clientY - windowHalfY) / windowHalfY;
+      }
+    };
+
     window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("touchmove", handleTouchMove);
 
     let animationFrameId: number;
     let clock = new THREE.Clock();
@@ -206,24 +219,30 @@ export function Hero3DBackground() {
       const t = clock.getElapsedTime();
 
       // Continuous Floating Animations on individual 3D products
-      phoneGroup.position.y = 0.8 + Math.sin(t * 1.2) * 0.15;
+      const floatAmp = isMobile ? 0.08 : 0.15;
+      const basePhoneY = isMobile ? 1.4 : 0.8;
+      const baseHeadphonesY = isMobile ? 1.4 : 0.9;
+      const baseBeautyY = isMobile ? -1.5 : -1.8;
+      const baseWatchY = isMobile ? -1.5 : -1.8;
+
+      phoneGroup.position.y = basePhoneY + Math.sin(t * 1.2) * floatAmp;
       phoneGroup.rotation.y += 0.008;
 
-      headphonesGroup.position.y = 0.9 + Math.cos(t * 1.4) * 0.15;
+      headphonesGroup.position.y = baseHeadphonesY + Math.cos(t * 1.4) * floatAmp;
       headphonesGroup.rotation.y -= 0.007;
 
-      beautyGroup.position.y = -1.8 + Math.sin(t * 1.5 + 1) * 0.15;
+      beautyGroup.position.y = baseBeautyY + Math.sin(t * 1.5 + 1) * floatAmp;
       beautyGroup.rotation.y += 0.009;
 
-      watchGroup.position.y = -1.8 + Math.cos(t * 1.3 + 2) * 0.15;
+      watchGroup.position.y = baseWatchY + Math.cos(t * 1.3 + 2) * floatAmp;
       watchGroup.rotation.y -= 0.008;
 
       phoneRing.rotation.z = t * 0.4;
       particlePoints.rotation.y = t * 0.02;
 
-      // Smooth Parallax Scene Rotation based on Mouse Move
-      rootGroup.rotation.y += (mouseX * 0.25 - rootGroup.rotation.y) * 0.05;
-      rootGroup.rotation.x += (-mouseY * 0.25 - rootGroup.rotation.x) * 0.05;
+      // Smooth Parallax Scene Rotation based on Mouse/Touch Move
+      rootGroup.rotation.y += (mouseX * 0.2 - rootGroup.rotation.y) * 0.05;
+      rootGroup.rotation.x += (-mouseY * 0.2 - rootGroup.rotation.x) * 0.05;
 
       renderer.render(scene, camera);
     };
@@ -234,8 +253,13 @@ export function Hero3DBackground() {
       if (!container) return;
       const w = container.clientWidth;
       const h = container.clientHeight;
+      const isMob = window.innerWidth < 768;
+
       camera.aspect = w / h;
+      camera.position.z = isMob ? 12 : 9;
       camera.updateProjectionMatrix();
+
+      rootGroup.scale.setScalar(isMob ? 0.55 : 1.0);
       renderer.setSize(w, h);
     };
 
@@ -243,6 +267,7 @@ export function Hero3DBackground() {
 
     return () => {
       window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("touchmove", handleTouchMove);
       window.removeEventListener("resize", handleResize);
       cancelAnimationFrame(animationFrameId);
       if (container && renderer.domElement) {
@@ -254,7 +279,10 @@ export function Hero3DBackground() {
 
   return (
     <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
-      <div ref={containerRef} className="h-full w-full opacity-90 transition-opacity duration-700" />
+      <div
+        ref={containerRef}
+        className="h-full w-full opacity-60 md:opacity-90 transition-opacity duration-700"
+      />
     </div>
   );
 }

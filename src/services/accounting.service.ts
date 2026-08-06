@@ -28,7 +28,7 @@ export async function ensureDefaultExpenseCategories() {
 export async function getFinancialSummary(preset: DateRangePreset = "month") {
   const { start, end } = getDateRangeBounds(preset);
 
-  const [revenueAggregate, expensesAggregate, expensesList, ordersList] = await Promise.all([
+  const [revenueAggregate, expensesAggregate, expensesList, ordersList, orderItemsList] = await Promise.all([
     prisma.order.aggregate({
       where: {
         createdAt: { gte: start, lte: end },
@@ -56,11 +56,29 @@ export async function getFinancialSummary(preset: DateRangePreset = "month") {
       select: { createdAt: true, total: true },
       orderBy: { createdAt: "asc" },
     }),
+    prisma.orderItem.findMany({
+      where: {
+        order: {
+          createdAt: { gte: start, lte: end },
+          status: { notIn: ["CANCELLED", "RETURNED"] },
+        },
+      },
+      include: {
+        product: { select: { costPrice: true, price: true } },
+      },
+    }),
   ]);
 
   const totalRevenue = Number(revenueAggregate._sum.total || 0);
   const totalExpenses = Number(expensesAggregate._sum.amount || 0);
-  const netProfit = totalRevenue - totalExpenses;
+
+  const cogs = orderItemsList.reduce((sum, item) => {
+    const cost = Number(item.product?.costPrice || Number(item.price) * 0.7);
+    return sum + cost * item.quantity;
+  }, 0);
+
+  const grossProfit = totalRevenue - cogs;
+  const netProfit = grossProfit - totalExpenses;
   const profitMarginPercentage = totalRevenue > 0 ? ((netProfit / totalRevenue) * 100).toFixed(1) : "0.0";
 
   // Financial Trend by date
@@ -99,6 +117,8 @@ export async function getFinancialSummary(preset: DateRangePreset = "month") {
 
   return {
     totalRevenue,
+    cogs,
+    grossProfit,
     totalExpenses,
     netProfit,
     profitMarginPercentage,

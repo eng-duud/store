@@ -77,7 +77,24 @@ export function ProductCard({ product, className }: ProductCardProps) {
         </div>
 
         <div className="absolute top-3 left-3 flex flex-col gap-1 z-10">
-          {product.isFeatured && <Badge variant="warning" className="shadow-sm">مميز</Badge>}
+          {product.isFeatured && (
+            <Badge
+              variant="warning"
+              className="shadow-sm font-bold flex items-center gap-1 bg-amber-500 text-white border-amber-600 px-2 py-0.5 text-[10px]"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="12"
+                height="12"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                stroke="none"
+              >
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+              </svg>
+              <span>مميز</span>
+            </Badge>
+          )}
         </div>
       </Link>
 

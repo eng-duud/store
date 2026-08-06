@@ -87,11 +87,19 @@ export async function getReportsSummary(preset: DateRangePreset = "month") {
       orderBy: { createdAt: "desc" },
       include: { user: { select: { name: true, email: true } } },
     }),
-    prisma.orderItem.groupBy({
-      by: ["productId", "name"],
-      _sum: { quantity: true, price: true },
-      orderBy: { _sum: { quantity: "desc" } },
-      take: 5,
+    prisma.orderItem.findMany({
+      where: {
+        order: {
+          createdAt: { gte: start, lte: end },
+          status: { notIn: ["CANCELLED", "RETURNED"] },
+        },
+      },
+      select: {
+        productId: true,
+        name: true,
+        price: true,
+        quantity: true,
+      },
     }),
   ]);
 
@@ -99,6 +107,25 @@ export async function getReportsSummary(preset: DateRangePreset = "month") {
   const totalExpenses = Number(totalExpensesResult._sum.amount || 0);
   const estimatedProfit = totalRevenue - totalExpenses;
   const averageOrderValue = Number(deliveredOrders._avg.total || 0);
+
+  const topProductMap: Record<string, { name: string; totalQuantity: number; totalSales: number }> = {};
+  topProductsRaw.forEach((item) => {
+    if (!topProductMap[item.productId]) {
+      topProductMap[item.productId] = { name: item.name, totalQuantity: 0, totalSales: 0 };
+    }
+    topProductMap[item.productId].totalQuantity += item.quantity;
+    topProductMap[item.productId].totalSales += Number(item.price) * item.quantity;
+  });
+
+  const topProducts = Object.entries(topProductMap)
+    .map(([productId, val]) => ({
+      productId,
+      name: val.name,
+      totalQuantity: val.totalQuantity,
+      totalSales: val.totalSales,
+    }))
+    .sort((a, b) => b.totalQuantity - a.totalQuantity)
+    .slice(0, 5);
 
   return {
     totalRevenue,
@@ -113,12 +140,7 @@ export async function getReportsSummary(preset: DateRangePreset = "month") {
     totalProductsCount,
     lowStockCount,
     recentOrders,
-    topProducts: topProductsRaw.map((p) => ({
-      productId: p.productId,
-      name: p.name,
-      totalQuantity: p._sum.quantity || 0,
-      totalSales: Number(p._sum.price || 0) * (p._sum.quantity || 0),
-    })),
+    topProducts,
   };
 }
 

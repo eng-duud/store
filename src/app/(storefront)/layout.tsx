@@ -1,5 +1,6 @@
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
+import { FloatingCartBar } from "@/components/cart/floating-cart-bar";
 
 export const dynamic = "force-dynamic";
 
@@ -13,6 +14,7 @@ export default function StorefrontLayout({
       <Header />
       <main className="flex-1">{children}</main>
       <Footer />
+      <FloatingCartBar />
     </div>
   );
 }

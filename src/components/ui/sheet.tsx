@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 interface SheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  side?: "right" | "left";
+  side?: "right" | "left" | "bottom";
   children: React.ReactNode;
   title?: string;
 }
@@ -38,8 +38,10 @@ export function Sheet({
 
   const sideClasses =
     side === "right"
-      ? "right-0 inset-y-0 animate-slide-in-right"
-      : "left-0 inset-y-0";
+      ? "right-0 inset-y-0 animate-slide-in-right max-w-sm sm:max-w-md h-full w-full"
+      : side === "left"
+      ? "left-0 inset-y-0 max-w-sm sm:max-w-md h-full w-full"
+      : "bottom-0 inset-x-0 mx-auto max-w-lg max-h-[85vh] h-auto rounded-t-3xl border-t border-x shadow-2xl";
 
   return (
     <div className="fixed inset-0 z-50 overflow-hidden">
@@ -49,7 +51,7 @@ export function Sheet({
       />
       <aside
         className={cn(
-          "fixed z-10 flex h-full w-full max-w-sm flex-col border-l bg-card p-6 shadow-elevated transition-transform duration-300 sm:max-w-md",
+          "fixed z-10 flex flex-col border-l bg-card p-6 shadow-elevated transition-transform duration-300",
           sideClasses
         )}
       >
