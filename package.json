@@ -21,6 +21,7 @@
     "@react-email/components": "^0.2.0",
     "@tanstack/react-query": "^5.83.0",
     "@types/bcryptjs": "^2.4.6",
+    "@types/three": "^0.185.4",
     "axios": "^1.10.0",
     "bcryptjs": "^3.0.3",
     "class-variance-authority": "^0.7.1",
@@ -39,6 +40,7 @@
     "resend": "^4.6.0",
     "sonner": "^2.0.3",
     "tailwind-merge": "^3.3.0",
+    "three": "^0.185.1",
     "zod": "^3.25.76",
     "zustand": "^5.0.5"
   },

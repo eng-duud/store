@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button";
 import { CategoryNav } from "@/components/product/category-nav";
 import { useRouter } from "next/navigation";
 
+import { Hero3DBackground } from "@/components/home/hero-3d-background";
+
 export default function HomePage() {
   const router = useRouter();
   const { data: featuredProducts, isLoading: productsLoading } = useFeaturedProducts();
@@ -25,9 +27,10 @@ export default function HomePage() {
 
   return (
     <>
-      <section className="relative overflow-hidden">
-        <div className="gradient-surface absolute inset-0 opacity-80" />
-        <div className="relative mx-auto max-w-7xl px-4 py-16 sm:py-24 lg:px-8 lg:py-28">
+      <section className="relative overflow-hidden min-h-[520px] flex items-center justify-center">
+        <Hero3DBackground />
+        <div className="gradient-surface absolute inset-0 opacity-60 pointer-events-none" />
+        <div className="relative z-10 mx-auto max-w-7xl px-4 py-16 sm:py-24 lg:px-8 lg:py-28">
           <div className="mx-auto max-w-3xl text-center animate-fade-in">
             <div className="mb-6 inline-flex items-center gap-2 rounded-full border bg-card/80 px-4 py-1.5 text-xs font-semibold text-muted-foreground shadow-card backdrop-blur-sm">
               <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />

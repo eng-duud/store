@@ -9,7 +9,12 @@ import { ProductGridSkeleton } from "@/components/shared/skeletons";
 import { Pagination } from "@/components/shared/pagination";
 import { useProducts, useCategories } from "@/hooks/use-products";
 
+import { MobileProductFilters } from "@/components/product/mobile-product-filters";
+import { CategoryNav } from "@/components/product/category-nav";
+import { useRouter } from "next/navigation";
+
 function ProductsContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const currentSearch = searchParams.get("q") || "";
   const currentCategory = searchParams.get("category") || undefined;
@@ -31,20 +36,50 @@ function ProductsContent() {
   if (currentCategory) searchParamObj.category = currentCategory;
   if (currentSort) searchParamObj.sort = currentSort;
 
+  const handleSelectCategory = (catSlug?: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (catSlug) {
+      params.set("category", catSlug);
+    } else {
+      params.delete("category");
+    }
+    params.set("page", "1");
+    router.push(`/products?${params.toString()}`);
+  };
+
   return (
-    <div className="mx-auto max-w-7xl px-4 py-10 lg:px-8">
-      <div className="mb-10">
-        <h1 className="mb-5 text-3xl font-bold tracking-tight">المنتجات</h1>
+    <div className="mx-auto max-w-7xl px-4 py-8 lg:px-8">
+      {/* Header & Search */}
+      <div className="mb-6">
+        <h1 className="mb-4 text-3xl font-bold tracking-tight">معرض المنتجات</h1>
         <SearchBar defaultValue={currentSearch} />
       </div>
 
-      <div className="grid grid-cols-1 gap-10 lg:grid-cols-[260px_1fr]">
+      {/* Top Quick Category Chips Bar */}
+      <div className="mb-8">
+        <CategoryNav
+          selectedCategorySlug={currentCategory}
+          onSelectCategory={handleSelectCategory}
+        />
+      </div>
+
+      {/* Mobile Filter Sheet & Button */}
+      <MobileProductFilters
+        categories={categories || []}
+        currentCategory={currentCategory}
+        currentSort={currentSort}
+      />
+
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-[260px_1fr]">
+        {/* Desktop Sidebar Filters */}
         <aside className="hidden lg:block">
-          <ProductFilters
-            categories={categories || []}
-            currentCategory={currentCategory}
-            currentSort={currentSort}
-          />
+          <div className="sticky top-24 rounded-2xl border bg-card p-5 shadow-card">
+            <ProductFilters
+              categories={categories || []}
+              currentCategory={currentCategory}
+              currentSort={currentSort}
+            />
+          </div>
         </aside>
 
         <div>
@@ -61,12 +96,13 @@ function ProductsContent() {
             <ProductGridSkeleton />
           ) : productsData && productsData.items.length > 0 ? (
             <>
-              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {/* Clean 2-column mobile grid & 3-column desktop grid */}
+              <div className="grid grid-cols-2 gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
                 {productsData.items.map((product) => (
                   <ProductCard key={product.id} product={product} />
                 ))}
               </div>
-              <div className="mt-10">
+              <div className="mt-12">
                 <Pagination
                   currentPage={productsData.page}
                   totalPages={productsData.totalPages}
@@ -84,7 +120,7 @@ function ProductsContent() {
                 </svg>
               </div>
               <h3 className="mb-2 text-lg font-bold">لا توجد منتجات</h3>
-              <p className="text-sm text-muted-foreground">لم نتمكن من العثور على منتجات تطابق بحثك</p>
+              <p className="text-sm text-muted-foreground">لم نتمكن من العثور على منتجات تطابق نتائجك</p>
             </div>
           )}
         </div>
