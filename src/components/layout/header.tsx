@@ -7,6 +7,7 @@ import { useSettings } from "@/hooks/use-settings";
 import { ThemeToggle } from "./theme-toggle";
 import { UserMenu } from "./user-menu";
 import { MobileNav } from "./mobile-nav";
+import { openOfficialCartDrawer } from "@/components/cart/floating-cart-bar";
 
 export function Header() {
   const { totalItems } = useCart();
@@ -75,9 +76,9 @@ export function Header() {
         <div className="flex items-center gap-2">
           <ThemeToggle />
 
-          <Link
-            href="/cart"
-            className="relative rounded-xl p-2.5 text-muted-foreground transition-all duration-200 hover:bg-accent hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+          <button
+            onClick={openOfficialCartDrawer}
+            className="relative rounded-xl p-2.5 text-muted-foreground transition-all duration-200 hover:bg-accent hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring cursor-pointer"
             aria-label="سلة التسوق"
           >
             <svg
@@ -100,7 +101,7 @@ export function Header() {
                 {totalItems}
               </span>
             )}
-          </Link>
+          </button>
 
           <UserMenu />
         </div>

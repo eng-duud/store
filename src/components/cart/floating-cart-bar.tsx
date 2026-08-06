@@ -7,11 +7,24 @@ import { useSettings } from "@/hooks/use-settings";
 import { Sheet } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 
+export function openOfficialCartDrawer() {
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new Event("open-cart-drawer"));
+  }
+}
+
 export function FloatingCartBar() {
   const { items, totalItems, subtotal, isHydrated, updateQuantity, removeItem } = useCart();
   const { formatCurrency } = useSettings();
   const [open, setOpen] = React.useState(false);
   const [animatePulse, setAnimatePulse] = React.useState(false);
+
+  // Listen for global open cart events (e.g. from header cart button)
+  React.useEffect(() => {
+    const handleOpen = () => setOpen(true);
+    window.addEventListener("open-cart-drawer", handleOpen);
+    return () => window.removeEventListener("open-cart-drawer", handleOpen);
+  }, []);
 
   // Trigger smooth pulse micro-animation when items are added
   React.useEffect(() => {
@@ -26,7 +39,7 @@ export function FloatingCartBar() {
 
   return (
     <>
-      {/* Floating Bottom Smooth Animated Cart Bar */}
+      {/* Floating Bottom Smooth Animated Official Cart Bar */}
       <div className="fixed bottom-5 right-1/2 translate-x-1/2 z-50 w-[92%] max-w-lg">
         <div
           onClick={() => setOpen(true)}
@@ -58,14 +71,14 @@ export function FloatingCartBar() {
             </div>
 
             <div className="flex flex-col text-right">
-              <span className="text-xs font-medium text-white/80">سلة التسوق</span>
+              <span className="text-xs font-medium text-white/80">سلة التسوق الرسمية</span>
               <span className="text-sm font-black tracking-tight text-white">
                 {formatCurrency(subtotal)}
               </span>
             </div>
           </div>
 
-          {/* Quick Preview Button */}
+          {/* Quick Action Button */}
           <div className="flex items-center gap-2">
             <span className="text-xs font-extrabold bg-white/20 hover:bg-white/30 text-white px-3.5 py-2 rounded-xl transition-colors flex items-center gap-1.5 shadow-sm">
               <span>عرض السلة</span>
@@ -87,7 +100,7 @@ export function FloatingCartBar() {
         </div>
       </div>
 
-      {/* Interactive Quick Cart Sheet Drawer */}
+      {/* Official Interactive Cart Sheet Drawer */}
       <Sheet open={open} onOpenChange={setOpen} title={`سلة التسوق (${totalItems} منتجات)`} side="bottom">
         <div className="py-2 space-y-4 max-h-[75vh] flex flex-col">
           {/* Cart Items List */}
@@ -159,7 +172,7 @@ export function FloatingCartBar() {
             ))}
           </div>
 
-          {/* Subtotal & Action Buttons */}
+          {/* Subtotal & Official Action Buttons */}
           <div className="border-t pt-3 space-y-3 bg-background">
             <div className="flex items-center justify-between text-sm">
               <span className="font-medium text-muted-foreground">الإجمالي الفرعي:</span>
@@ -167,11 +180,13 @@ export function FloatingCartBar() {
             </div>
 
             <div className="grid grid-cols-2 gap-2 pt-1">
-              <Link href="/cart" onClick={() => setOpen(false)}>
-                <Button variant="outline" className="w-full rounded-xl font-bold text-xs py-2.5">
-                  عرض السلة الكاملة
-                </Button>
-              </Link>
+              <Button
+                variant="outline"
+                onClick={() => setOpen(false)}
+                className="w-full rounded-xl font-bold text-xs py-2.5 cursor-pointer"
+              >
+                متابعة التسوق
+              </Button>
               <Link href="/checkout" onClick={() => setOpen(false)}>
                 <Button className="w-full rounded-xl font-extrabold text-xs py-2.5 shadow-md">
                   إتمام الشراء والدفع &rarr;
