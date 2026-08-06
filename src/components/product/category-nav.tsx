@@ -8,6 +8,7 @@ interface CategoryNavProps {
   selectedCategorySlug?: string;
   selectedSubcategorySlug?: string;
   onSelectCategory?: (categorySlug?: string, subcategorySlug?: string) => void;
+  onOpenMobileFilters?: () => void;
   className?: string;
 }
 
@@ -15,6 +16,7 @@ export function CategoryNav({
   selectedCategorySlug,
   selectedSubcategorySlug,
   onSelectCategory,
+  onOpenMobileFilters,
   className,
 }: CategoryNavProps) {
   const { data: categories, isLoading } = useCategories();
@@ -55,8 +57,39 @@ export function CategoryNav({
     <div className={cn("w-full py-4 space-y-5", className)}>
       <div className="relative">
         <div className="flex items-center gap-4 overflow-x-auto pb-3 pt-1 px-1 scrollbar-thin scroll-smooth">
+          {/* Mobile Filter Button directly next to All Chip */}
+          {onOpenMobileFilters && (
+            <button
+              onClick={onOpenMobileFilters}
+              className="group flex flex-col items-center gap-2 min-w-[70px] cursor-pointer transition-all duration-300 focus:outline-none lg:hidden"
+              title="تصفية وفلترة"
+              aria-label="تصفية وفلترة"
+            >
+              <div className="relative flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-full border-2 border-primary/40 bg-accent text-primary transition-all duration-300 shadow-sm hover:border-primary hover:scale-105">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="22"
+                  height="22"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
+                </svg>
+              </div>
+              <div className="flex flex-col items-center text-center">
+                <span className="text-xs font-bold text-primary">تصفية</span>
+                <span className="text-[10px] text-muted-foreground font-medium">خيارات</span>
+              </div>
+            </button>
+          )}
+
+          {/* "All" Categories Button */}
           <button
-            onClick={() => onSelectCategory?.(undefined)}
+            onClick={() => onSelectCategory?.(undefined, undefined)}
             className={cn(
               "group flex flex-col items-center gap-2 min-w-[84px] sm:min-w-[96px] cursor-pointer transition-all duration-300 focus:outline-none",
               !selectedCategorySlug && "scale-105"
@@ -108,7 +141,7 @@ export function CategoryNav({
             return (
               <button
                 key={cat.id}
-                onClick={() => onSelectCategory?.(cat.slug)}
+                onClick={() => onSelectCategory?.(cat.slug, undefined)}
                 className={cn(
                   "group flex flex-col items-center gap-2 min-w-[84px] sm:min-w-[96px] cursor-pointer transition-all duration-300 focus:outline-none",
                   isSelected && "scale-105"
@@ -170,6 +203,7 @@ export function CategoryNav({
         </div>
       </div>
 
+      {/* Subcategory Chips Filter Bar */}
       {subcategories.length > 0 && (
         <div className="flex items-center gap-2 overflow-x-auto pb-2 pt-2 px-1 scrollbar-thin animate-fade-in border-t border-border/60">
           <span className="text-xs font-semibold text-muted-foreground whitespace-nowrap ml-2">
@@ -178,9 +212,9 @@ export function CategoryNav({
           <button
             onClick={() => onSelectCategory?.(selectedCategorySlug, undefined)}
             className={cn(
-              "rounded-full px-3.5 py-1.5 text-xs font-semibold transition-all duration-200 shadow-sm border",
+              "rounded-full px-4 py-1.5 text-xs font-bold transition-all duration-200 shadow-sm border cursor-pointer",
               !selectedSubcategorySlug
-                ? "bg-primary text-primary-foreground border-primary"
+                ? "bg-primary text-primary-foreground border-primary shadow-md"
                 : "bg-card text-muted-foreground border-border hover:bg-accent hover:text-foreground"
             )}
           >
@@ -193,9 +227,9 @@ export function CategoryNav({
                 key={sub.id}
                 onClick={() => onSelectCategory?.(selectedCategorySlug, sub.slug)}
                 className={cn(
-                  "rounded-full px-3.5 py-1.5 text-xs font-semibold transition-all duration-200 shadow-sm border whitespace-nowrap",
+                  "rounded-full px-4 py-1.5 text-xs font-bold transition-all duration-200 shadow-sm border whitespace-nowrap cursor-pointer",
                   isSubSelected
-                    ? "bg-primary text-primary-foreground border-primary"
+                    ? "bg-primary text-primary-foreground border-primary shadow-md"
                     : "bg-card text-muted-foreground border-border hover:bg-accent hover:text-foreground"
                 )}
               >

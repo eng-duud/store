@@ -1,35 +1,10 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef } from "react";
 import * as THREE from "three";
-import { cn } from "@/lib/utils";
-
-type ScenePreset = "phone" | "headphones" | "beauty" | "smartwatch";
-
-interface PresetItem {
-  id: ScenePreset;
-  label: string;
-  icon: string;
-  color: string;
-}
-
-const PRESETS: PresetItem[] = [
-  { id: "phone", label: "إلكترونيات وجوالات", icon: "📱", color: "#3b82f6" },
-  { id: "headphones", label: "صوتيات وسماعات", icon: "🎧", color: "#8b5cf6" },
-  { id: "beauty", label: "عناية شخصية وجمال", icon: "🧴", color: "#ec4899" },
-  { id: "smartwatch", label: "ساعات ذكية", icon: "⌚", color: "#f59e0b" },
-];
 
 export function Hero3DBackground() {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [activePreset, setActivePreset] = useState<ScenePreset>("phone");
-  const [autoRotate, setAutoRotate] = useState(true);
-
-  const activePresetRef = useRef(activePreset);
-  activePresetRef.current = activePreset;
-
-  const autoRotateRef = useRef(autoRotate);
-  autoRotateRef.current = autoRotate;
 
   useEffect(() => {
     const container = containerRef.current;
@@ -42,7 +17,7 @@ export function Hero3DBackground() {
     const height = container.clientHeight;
 
     const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
-    camera.position.set(0, 0, 8);
+    camera.position.set(0, 0, 9);
 
     const renderer = new THREE.WebGLRenderer({
       alpha: true,
@@ -53,161 +28,166 @@ export function Hero3DBackground() {
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     container.appendChild(renderer.domElement);
 
-    // 2. Lighting
-    const ambientLight = new THREE.AmbientLight(0xffffff, 1.2);
+    // 2. Lighting System
+    const ambientLight = new THREE.AmbientLight(0xffffff, 1.4);
     scene.add(ambientLight);
 
     const mainLight = new THREE.DirectionalLight(0xffffff, 2.5);
-    mainLight.position.set(5, 5, 5);
+    mainLight.position.set(6, 6, 6);
     scene.add(mainLight);
 
-    const bluePointLight = new THREE.PointLight(0x3b82f6, 3, 20);
-    bluePointLight.position.set(-4, -2, 3);
-    scene.add(bluePointLight);
+    const blueLight = new THREE.PointLight(0x3b82f6, 4, 25);
+    blueLight.position.set(-5, 2, 4);
+    scene.add(blueLight);
 
-    const accentPointLight = new THREE.PointLight(0xf59e0b, 3, 20);
-    accentPointLight.position.set(4, 3, 2);
-    scene.add(accentPointLight);
+    const purpleLight = new THREE.PointLight(0x8b5cf6, 4, 25);
+    purpleLight.position.set(5, -2, 4);
+    scene.add(purpleLight);
 
-    // 3. Main Product Root Group
-    const productGroup = new THREE.Group();
-    scene.add(productGroup);
+    // 3. Root Group for Parallax
+    const rootGroup = new THREE.Group();
+    scene.add(rootGroup);
 
-    // 4. Create procedural 3D Meshes for each preset
-    const presetGroups: Record<ScenePreset, THREE.Group> = {
-      phone: new THREE.Group(),
-      headphones: new THREE.Group(),
-      beauty: new THREE.Group(),
-      smartwatch: new THREE.Group(),
-    };
+    // ─── PRODUCT 1: SMARTPHONE (Top Left) ─────────────────
+    const phoneGroup = new THREE.Group();
+    phoneGroup.position.set(-3.2, 0.8, -0.5);
+    phoneGroup.rotation.set(0.2, 0.4, -0.1);
 
-    // ─── A. PHONE SCENE ──────────────────────────────────
-    const phoneMat = new THREE.MeshStandardMaterial({
-      color: 0x1e293b,
-      metalness: 0.85,
-      roughness: 0.15,
-    });
-    const phoneBody = new THREE.Mesh(new THREE.BoxGeometry(1.9, 3.7, 0.22), phoneMat);
-    presetGroups.phone.add(phoneBody);
+    const phoneMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.85, roughness: 0.15 });
+    const phoneBody = new THREE.Mesh(new THREE.BoxGeometry(1.5, 3.0, 0.18), phoneMat);
+    phoneGroup.add(phoneBody);
 
-    const screenMat = new THREE.MeshStandardMaterial({
-      color: 0x2563eb,
-      emissive: 0x1d4ed8,
-      emissiveIntensity: 0.6,
-      roughness: 0.1,
-    });
-    const screen = new THREE.Mesh(new THREE.PlaneGeometry(1.75, 3.5), screenMat);
-    screen.position.z = 0.12;
-    presetGroups.phone.add(screen);
+    const screenMat = new THREE.MeshStandardMaterial({ color: 0x2563eb, emissive: 0x1d4ed8, emissiveIntensity: 0.7, roughness: 0.1 });
+    const screen = new THREE.Mesh(new THREE.PlaneGeometry(1.38, 2.85), screenMat);
+    screen.position.z = 0.1;
+    phoneGroup.add(screen);
 
-    const cameraBumpMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, metalness: 0.9, roughness: 0.1 });
-    const cameraBump = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.6, 0.1), cameraBumpMat);
-    cameraBump.position.set(-0.5, 1.2, -0.12);
-    presetGroups.phone.add(cameraBump);
-
-    const ringGeo = new THREE.TorusGeometry(2.5, 0.02, 16, 100);
-    const ringMat = new THREE.MeshStandardMaterial({ color: 0x60a5fa, emissive: 0x3b82f6, emissiveIntensity: 0.8 });
-    const phoneRing = new THREE.Mesh(ringGeo, ringMat);
+    const phoneRing = new THREE.Mesh(
+      new THREE.TorusGeometry(2.0, 0.025, 16, 80),
+      new THREE.MeshStandardMaterial({ color: 0x60a5fa, emissive: 0x3b82f6, emissiveIntensity: 0.8 })
+    );
     phoneRing.rotation.x = Math.PI / 3;
-    presetGroups.phone.add(phoneRing);
+    phoneGroup.add(phoneRing);
+    rootGroup.add(phoneGroup);
 
-    // ─── B. HEADPHONES SCENE ─────────────────────────────
-    const earCupMat = new THREE.MeshStandardMaterial({ color: 0x18181b, metalness: 0.7, roughness: 0.2 });
-    const earCupLeft = new THREE.Mesh(new THREE.CylinderGeometry(0.75, 0.75, 0.4, 32), earCupMat);
-    earCupLeft.rotation.z = Math.PI / 2;
-    earCupLeft.position.set(-1.3, 0, 0);
+    // ─── PRODUCT 2: HEADPHONES (Top Right) ────────────────
+    const headphonesGroup = new THREE.Group();
+    headphonesGroup.position.set(3.2, 0.9, -0.5);
+    headphonesGroup.rotation.set(-0.2, -0.4, 0.1);
 
-    const earCupRight = earCupLeft.clone();
-    earCupRight.position.set(1.3, 0, 0);
-    presetGroups.headphones.add(earCupLeft, earCupRight);
+    const earCupMat = new THREE.MeshStandardMaterial({ color: 0x18181b, metalness: 0.75, roughness: 0.2 });
+    const earLeft = new THREE.Mesh(new THREE.CylinderGeometry(0.65, 0.65, 0.35, 32), earCupMat);
+    earLeft.rotation.z = Math.PI / 2;
+    earLeft.position.set(-1.1, 0, 0);
 
-    const headbandMat = new THREE.MeshStandardMaterial({ color: 0x27272a, metalness: 0.8, roughness: 0.2 });
-    const headband = new THREE.Mesh(new THREE.TorusGeometry(1.3, 0.08, 16, 100, Math.PI), headbandMat);
+    const earRight = earLeft.clone();
+    earRight.position.set(1.1, 0, 0);
+    headphonesGroup.add(earLeft, earRight);
+
+    const headband = new THREE.Mesh(
+      new THREE.TorusGeometry(1.1, 0.07, 16, 80, Math.PI),
+      new THREE.MeshStandardMaterial({ color: 0x27272a, metalness: 0.8, roughness: 0.2 })
+    );
     headband.position.set(0, 0.2, 0);
-    presetGroups.headphones.add(headband);
+    headphonesGroup.add(headband);
 
-    const ledRingMat = new THREE.MeshStandardMaterial({ color: 0x8b5cf6, emissive: 0xa855f7, emissiveIntensity: 1 });
-    const ledRingLeft = new THREE.Mesh(new THREE.TorusGeometry(0.76, 0.03, 16, 50), ledRingMat);
+    const ledRingLeft = new THREE.Mesh(
+      new THREE.TorusGeometry(0.66, 0.03, 16, 40),
+      new THREE.MeshStandardMaterial({ color: 0x8b5cf6, emissive: 0xa855f7, emissiveIntensity: 1 })
+    );
     ledRingLeft.rotation.y = Math.PI / 2;
-    ledRingLeft.position.set(-1.51, 0, 0);
+    ledRingLeft.position.set(-1.28, 0, 0);
     const ledRingRight = ledRingLeft.clone();
-    ledRingRight.position.set(1.51, 0, 0);
-    presetGroups.headphones.add(ledRingLeft, ledRingRight);
+    ledRingRight.position.set(1.28, 0, 0);
+    headphonesGroup.add(ledRingLeft, ledRingRight);
+    rootGroup.add(headphonesGroup);
 
-    // ─── C. BEAUTY BOTTLE SCENE ──────────────────────────
+    // ─── PRODUCT 3: BEAUTY BOTTLE (Bottom Left) ───────────
+    const beautyGroup = new THREE.Group();
+    beautyGroup.position.set(-2.4, -1.8, 0.2);
+    beautyGroup.rotation.set(0.1, 0.3, 0.15);
+
     const glassMat = new THREE.MeshPhysicalMaterial({
       color: 0xf472b6,
       transmission: 0.85,
       opacity: 1,
       transparent: true,
       roughness: 0.1,
-      ior: 1.5,
       reflectivity: 0.9,
     });
-    const bottleBody = new THREE.Mesh(new THREE.CylinderGeometry(0.85, 0.95, 2.4, 32), glassMat);
-    presetGroups.beauty.add(bottleBody);
+    const bottleBody = new THREE.Mesh(new THREE.CylinderGeometry(0.7, 0.8, 2.0, 32), glassMat);
+    beautyGroup.add(bottleBody);
 
-    const goldCapMat = new THREE.MeshStandardMaterial({ color: 0xf59e0b, metalness: 0.95, roughness: 0.1 });
-    const bottleCap = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.45, 0.6, 32), goldCapMat);
-    bottleCap.position.y = 1.5;
-    presetGroups.beauty.add(bottleCap);
+    const bottleCap = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.35, 0.35, 0.5, 32),
+      new THREE.MeshStandardMaterial({ color: 0xf59e0b, metalness: 0.9, roughness: 0.1 })
+    );
+    bottleCap.position.y = 1.25;
+    beautyGroup.add(bottleCap);
 
-    // Orbiting cosmetic bubbles
-    const bubbleGeo = new THREE.SphereGeometry(0.1, 16, 16);
-    const bubbleMat = new THREE.MeshStandardMaterial({ color: 0xfbcfe8, emissive: 0xf472b6, emissiveIntensity: 0.6 });
-    for (let i = 0; i < 8; i++) {
+    // Floating cosmetic bubbles
+    const bubbleGeo = new THREE.SphereGeometry(0.08, 16, 16);
+    const bubbleMat = new THREE.MeshStandardMaterial({ color: 0xfbcfe8, emissive: 0xf472b6, emissiveIntensity: 0.5 });
+    for (let i = 0; i < 6; i++) {
       const bubble = new THREE.Mesh(bubbleGeo, bubbleMat);
-      const angle = (i / 8) * Math.PI * 2;
-      bubble.position.set(Math.cos(angle) * 1.8, (Math.sin(angle * 2) * 0.8), Math.sin(angle) * 1.8);
-      presetGroups.beauty.add(bubble);
+      const a = (i / 6) * Math.PI * 2;
+      bubble.position.set(Math.cos(a) * 1.4, Math.sin(a * 2) * 0.6, Math.sin(a) * 1.4);
+      beautyGroup.add(bubble);
     }
+    rootGroup.add(beautyGroup);
 
-    // ─── D. SMART WATCH SCENE ───────────────────────────
-    const watchBodyMat = new THREE.MeshStandardMaterial({ color: 0x334155, metalness: 0.9, roughness: 0.1 });
-    const watchBody = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.2, 0.25, 32), watchBodyMat);
-    presetGroups.smartwatch.add(watchBody);
+    // ─── PRODUCT 4: SMART WATCH (Bottom Right) ────────────
+    const watchGroup = new THREE.Group();
+    watchGroup.position.set(2.4, -1.8, 0.2);
+    watchGroup.rotation.set(-0.15, -0.3, -0.1);
 
-    const watchScreenMat = new THREE.MeshStandardMaterial({ color: 0x10b981, emissive: 0x059669, emissiveIntensity: 0.7 });
-    const watchScreen = new THREE.Mesh(new THREE.CylinderGeometry(1.05, 1.05, 0.05, 32), watchScreenMat);
-    watchScreen.position.y = 0.13;
-    presetGroups.smartwatch.add(watchScreen);
+    const watchBody = new THREE.Mesh(
+      new THREE.CylinderGeometry(1.0, 1.0, 0.22, 32),
+      new THREE.MeshStandardMaterial({ color: 0x334155, metalness: 0.9, roughness: 0.1 })
+    );
+    watchGroup.add(watchBody);
 
-    const strapMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.5 });
-    const strapTop = new THREE.Mesh(new THREE.BoxGeometry(0.9, 1.8, 0.12), strapMat);
-    strapTop.position.set(0, 1.6, 0);
+    const watchScreen = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.88, 0.88, 0.04, 32),
+      new THREE.MeshStandardMaterial({ color: 0x10b981, emissive: 0x059669, emissiveIntensity: 0.8 })
+    );
+    watchScreen.position.y = 0.12;
+    watchGroup.add(watchScreen);
+
+    const strapTop = new THREE.Mesh(
+      new THREE.BoxGeometry(0.75, 1.4, 0.1),
+      new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.5 })
+    );
+    strapTop.position.set(0, 1.3, 0);
     const strapBottom = strapTop.clone();
-    strapBottom.position.set(0, -1.6, 0);
-    presetGroups.smartwatch.add(strapTop, strapBottom);
+    strapBottom.position.set(0, -1.3, 0);
+    watchGroup.add(strapTop, strapBottom);
+    rootGroup.add(watchGroup);
 
-    // Add all preset groups into productGroup
-    Object.values(presetGroups).forEach((group) => productGroup.add(group));
-
-    // 5. Particles Field
-    const particleCount = 250;
+    // ─── 5. FLOATING PARTICLE FIELD ───────────────────────
+    const particleCount = 300;
     const particlesGeo = new THREE.BufferGeometry();
     const posArray = new Float32Array(particleCount * 3);
 
     for (let i = 0; i < particleCount * 3; i += 3) {
-      posArray[i] = (Math.random() - 0.5) * 16;
+      posArray[i] = (Math.random() - 0.5) * 18;
       posArray[i + 1] = (Math.random() - 0.5) * 16;
-      posArray[i + 2] = (Math.random() - 0.5) * 16;
+      posArray[i + 2] = (Math.random() - 0.5) * 14;
     }
 
     particlesGeo.setAttribute("position", new THREE.BufferAttribute(posArray, 3));
     const particlesMat = new THREE.PointsMaterial({
-      size: 0.04,
+      size: 0.045,
       color: 0x60a5fa,
       transparent: true,
-      opacity: 0.6,
+      opacity: 0.65,
     });
     const particlePoints = new THREE.Points(particlesGeo, particlesMat);
     scene.add(particlePoints);
 
-    // 6. Interaction & Animation Loop
+    // ─── 6. INTERACTION & ANIMATION LOOP ──────────────────
     let mouseX = 0;
     let mouseY = 0;
-    let targetRotationX = 0;
-    let targetRotationY = 0;
 
     const handleMouseMove = (e: MouseEvent) => {
       const windowHalfX = window.innerWidth / 2;
@@ -223,42 +203,33 @@ export function Hero3DBackground() {
 
     const animate = () => {
       animationFrameId = requestAnimationFrame(animate);
-      const elapsedTime = clock.getElapsedTime();
+      const t = clock.getElapsedTime();
 
-      // Update preset visibility
-      const current = activePresetRef.current;
-      (Object.keys(presetGroups) as ScenePreset[]).forEach((key) => {
-        const grp = presetGroups[key];
-        if (key === current) {
-          grp.visible = true;
-          grp.scale.lerp(new THREE.Vector3(1, 1, 1), 0.08);
-        } else {
-          grp.scale.lerp(new THREE.Vector3(0.01, 0.01, 0.01), 0.08);
-          if (grp.scale.x < 0.05) grp.visible = false;
-        }
-      });
+      // Continuous Floating Animations on individual 3D products
+      phoneGroup.position.y = 0.8 + Math.sin(t * 1.2) * 0.15;
+      phoneGroup.rotation.y += 0.008;
 
-      // Rotation & Parallax
-      if (autoRotateRef.current) {
-        productGroup.rotation.y += 0.008;
-      }
+      headphonesGroup.position.y = 0.9 + Math.cos(t * 1.4) * 0.15;
+      headphonesGroup.rotation.y -= 0.007;
 
-      targetRotationY = mouseX * 0.4;
-      targetRotationX = mouseY * 0.4;
+      beautyGroup.position.y = -1.8 + Math.sin(t * 1.5 + 1) * 0.15;
+      beautyGroup.rotation.y += 0.009;
 
-      productGroup.rotation.x += (targetRotationX - productGroup.rotation.x) * 0.05;
-      productGroup.rotation.z = Math.sin(elapsedTime * 0.5) * 0.08;
+      watchGroup.position.y = -1.8 + Math.cos(t * 1.3 + 2) * 0.15;
+      watchGroup.rotation.y -= 0.008;
 
-      // Rotate extra rings & particles
-      phoneRing.rotation.z = elapsedTime * 0.5;
-      particlePoints.rotation.y = elapsedTime * 0.03;
+      phoneRing.rotation.z = t * 0.4;
+      particlePoints.rotation.y = t * 0.02;
+
+      // Smooth Parallax Scene Rotation based on Mouse Move
+      rootGroup.rotation.y += (mouseX * 0.25 - rootGroup.rotation.y) * 0.05;
+      rootGroup.rotation.x += (-mouseY * 0.25 - rootGroup.rotation.x) * 0.05;
 
       renderer.render(scene, camera);
     };
 
     animate();
 
-    // 7. Resize Handler
     const handleResize = () => {
       if (!container) return;
       const w = container.clientWidth;
@@ -282,57 +253,8 @@ export function Hero3DBackground() {
   }, []);
 
   return (
-    <div className="absolute inset-0 z-0 overflow-hidden pointer-events-auto">
-      {/* 3D WebGL Canvas Container */}
+    <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
       <div ref={containerRef} className="h-full w-full opacity-90 transition-opacity duration-700" />
-
-      {/* Preset Switcher Control Bar */}
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-10 flex items-center gap-2 rounded-full border border-border/60 bg-card/70 p-1.5 shadow-elevated backdrop-blur-md max-w-[95vw] overflow-x-auto scrollbar-none">
-        {PRESETS.map((preset) => {
-          const isActive = activePreset === preset.id;
-          return (
-            <button
-              key={preset.id}
-              onClick={() => setActivePreset(preset.id)}
-              className={cn(
-                "flex items-center gap-2 rounded-full px-3.5 py-1.5 text-xs font-bold transition-all duration-300 whitespace-nowrap cursor-pointer",
-                isActive
-                  ? "bg-primary text-primary-foreground shadow-md scale-105"
-                  : "text-muted-foreground hover:bg-accent hover:text-foreground"
-              )}
-            >
-              <span>{preset.icon}</span>
-              <span>{preset.label}</span>
-            </button>
-          );
-        })}
-
-        <button
-          onClick={() => setAutoRotate(!autoRotate)}
-          className={cn(
-            "flex h-8 w-8 items-center justify-center rounded-full border border-border/50 text-xs transition-colors ml-1 cursor-pointer",
-            autoRotate ? "bg-primary/20 text-primary border-primary/40" : "text-muted-foreground hover:bg-accent"
-          )}
-          title={autoRotate ? "إيقاف الدوران التلقائي" : "تشغيل الدوران التلقائي"}
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="14"
-            height="14"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className={autoRotate ? "animate-spin" : ""}
-            style={{ animationDuration: "6s" }}
-          >
-            <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" />
-            <path d="M21 3v5h-5" />
-          </svg>
-        </button>
-      </div>
     </div>
   );
 }

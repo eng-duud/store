@@ -1,7 +1,7 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { Suspense } from "react";
+import { Suspense, useState } from "react";
 import { ProductCard } from "@/components/product/product-card";
 import { SearchBar } from "@/components/product/search-bar";
 import { ProductFilters } from "@/components/product/product-filters";
@@ -16,14 +16,19 @@ import { useRouter } from "next/navigation";
 function ProductsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
+
   const currentSearch = searchParams.get("q") || "";
   const currentCategory = searchParams.get("category") || undefined;
+  const currentSubcategory = searchParams.get("sub") || undefined;
   const currentSort = searchParams.get("sort") || undefined;
   const currentPage = Number(searchParams.get("page")) || 1;
 
+  const activeCategoryFilter = currentSubcategory || currentCategory;
+
   const { data: productsData, isLoading } = useProducts({
     search: currentSearch,
-    categorySlug: currentCategory,
+    categorySlug: activeCategoryFilter,
     sort: currentSort as "price_asc" | "price_desc" | "newest" | "name_asc" | undefined,
     page: currentPage,
     limit: 12,
@@ -34,14 +39,20 @@ function ProductsContent() {
   const searchParamObj: Record<string, string> = {};
   if (currentSearch) searchParamObj.q = currentSearch;
   if (currentCategory) searchParamObj.category = currentCategory;
+  if (currentSubcategory) searchParamObj.sub = currentSubcategory;
   if (currentSort) searchParamObj.sort = currentSort;
 
-  const handleSelectCategory = (catSlug?: string) => {
+  const handleSelectCategory = (catSlug?: string, subSlug?: string) => {
     const params = new URLSearchParams(searchParams.toString());
     if (catSlug) {
       params.set("category", catSlug);
     } else {
       params.delete("category");
+    }
+    if (subSlug) {
+      params.set("sub", subSlug);
+    } else {
+      params.delete("sub");
     }
     params.set("page", "1");
     router.push(`/products?${params.toString()}`);
@@ -55,16 +66,20 @@ function ProductsContent() {
         <SearchBar defaultValue={currentSearch} />
       </div>
 
-      {/* Top Quick Category Chips Bar */}
+      {/* Top Category Nav with Filter Icon Button */}
       <div className="mb-8">
         <CategoryNav
           selectedCategorySlug={currentCategory}
+          selectedSubcategorySlug={currentSubcategory}
           onSelectCategory={handleSelectCategory}
+          onOpenMobileFilters={() => setMobileFilterOpen(true)}
         />
       </div>
 
-      {/* Mobile Filter Sheet & Button */}
+      {/* Mobile Filter Sheet Drawer */}
       <MobileProductFilters
+        open={mobileFilterOpen}
+        onOpenChange={setMobileFilterOpen}
         categories={categories || []}
         currentCategory={currentCategory}
         currentSort={currentSort}
