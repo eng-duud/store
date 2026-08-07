@@ -18,6 +18,8 @@ export interface CartItemState {
 
 interface CartStore {
   items: CartItemState[];
+  isCartOpen: boolean;
+  setIsCartOpen: (open: boolean) => void;
   addItem: (product: Product, variant?: ProductVariant | null, quantity?: number) => void;
   removeItem: (id: string) => void;
   updateQuantity: (id: string, quantity: number) => void;
@@ -28,6 +30,9 @@ export const useCartStore = create<CartStore>()(
   persist(
     (set, get) => ({
       items: [],
+      isCartOpen: false,
+
+      setIsCartOpen: (open: boolean) => set({ isCartOpen: open }),
 
       addItem: (product, variant = null, quantity = 1) => {
         const itemId = variant ? `${product.id}-${variant.id}` : product.id;
@@ -40,6 +45,7 @@ export const useCartStore = create<CartStore>()(
                 ? { ...item, quantity: item.quantity + quantity }
                 : item
             ),
+            isCartOpen: true, // Automatically open cart sidebar when item is added!
           });
         } else {
           const price = variant?.price ? Number(variant.price) : product.salePrice ? Number(product.salePrice) : Number(product.price);
@@ -60,6 +66,7 @@ export const useCartStore = create<CartStore>()(
                 maxQuantity: stockQuantity,
               },
             ],
+            isCartOpen: true, // Automatically open cart sidebar when item is added!
           });
         }
       },
@@ -69,6 +76,10 @@ export const useCartStore = create<CartStore>()(
       },
 
       updateQuantity: (id, quantity) => {
+        if (quantity <= 0) {
+          get().removeItem(id);
+          return;
+        }
         set({
           items: get().items.map((item) =>
             item.id === id ? { ...item, quantity: Math.max(1, quantity) } : item
@@ -80,6 +91,7 @@ export const useCartStore = create<CartStore>()(
     }),
     {
       name: "cart-storage",
+      partialize: (state) => ({ items: state.items }), // Persist only items, not modal open state
     }
   )
 );
@@ -93,12 +105,15 @@ export function useCart() {
   }, []);
 
   const items = isHydrated ? store.items : [];
+  const cartItems = items;
   const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
   const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
   return {
     ...store,
     items,
+    cartItems,
+    removeFromCart: store.removeItem,
     totalItems,
     subtotal,
     isHydrated,
