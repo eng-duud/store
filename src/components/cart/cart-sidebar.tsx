@@ -132,17 +132,25 @@ export default function CartSidebar() {
         {cartItems.length > 0 && (
           <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/80 space-y-3">
             <div className="flex items-center justify-between text-sm">
-              <span className="font-medium text-slate-500 dark:text-slate-400">الإجمالي الفرعي:</span>
+              <span className="font-bold text-slate-700 dark:text-slate-300">إجمالي المشتريات:</span>
               <span className="font-black text-xl text-primary">{formatCurrency(subtotal)}</span>
             </div>
 
-            <Link
-              href="/checkout"
-              onClick={() => setIsCartOpen(false)}
-              className="w-full py-3.5 bg-primary hover:bg-primary/90 text-primary-foreground rounded-2xl font-bold text-sm flex items-center justify-center transition-all shadow-lg gap-2 cursor-pointer active:scale-[0.98]"
-            >
-              إتمام الطلب والدفع &rarr;
-            </Link>
+            <div className="grid grid-cols-2 gap-2 pt-1">
+              <button
+                onClick={() => setIsCartOpen(false)}
+                className="w-full py-3 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 rounded-2xl font-bold text-xs flex items-center justify-center transition-all cursor-pointer"
+              >
+                متابعة التسوق
+              </button>
+              <Link
+                href="/checkout"
+                onClick={() => setIsCartOpen(false)}
+                className="w-full py-3 bg-primary hover:bg-primary/90 text-primary-foreground rounded-2xl font-bold text-xs flex items-center justify-center transition-all shadow-md gap-1 cursor-pointer active:scale-[0.98]"
+              >
+                إتمام الطلب والدفع &rarr;
+              </Link>
+            </div>
           </div>
         )}
       </div>

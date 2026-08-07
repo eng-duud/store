@@ -45,7 +45,6 @@ export const useCartStore = create<CartStore>()(
                 ? { ...item, quantity: item.quantity + quantity }
                 : item
             ),
-            isCartOpen: true, // Automatically open cart sidebar when item is added!
           });
         } else {
           const price = variant?.price ? Number(variant.price) : product.salePrice ? Number(product.salePrice) : Number(product.price);
@@ -66,7 +65,6 @@ export const useCartStore = create<CartStore>()(
                 maxQuantity: stockQuantity,
               },
             ],
-            isCartOpen: true, // Automatically open cart sidebar when item is added!
           });
         }
       },
