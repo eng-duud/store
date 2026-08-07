@@ -64,6 +64,32 @@ async function main() {
     },
   });
 
+  // Enterprise Role Users
+  const roleUsers = [
+    { email: "gm@store.com", name: "المهندس عادل (المدير العام)", role: UserRole.ADMIN },
+    { email: "finance@store.com", name: "أستاذ طارق (مدير المالية)", role: UserRole.ADMIN },
+    { email: "accountant@store.com", name: "أستاذة ماجدة (رئيسة المحاسبين)", role: UserRole.ADMIN },
+    { email: "purchasing@store.com", name: "المهندس سلطان (مدير المشتريات)", role: UserRole.ADMIN },
+    { email: "salesmgr@store.com", name: "أستاذ خالد (مدير المبيعات)", role: UserRole.ADMIN },
+    { email: "storekeeper@store.com", name: "سعد (أمين المستودع)", role: UserRole.EMPLOYEE },
+  ];
+
+  for (const ru of roleUsers) {
+    await prisma.user.upsert({
+      where: { email: ru.email },
+      update: {},
+      create: {
+        name: ru.name,
+        email: ru.email,
+        phone: "+96650" + Math.floor(1000000 + Math.random() * 9000000),
+        passwordHash: adminPassword,
+        role: ru.role,
+        emailVerified: new Date(),
+        isActive: true,
+      },
+    });
+  }
+
   const customerData = [
     { name: "أحمد محمد العلي", email: "mohammed@gmail.com", phone: "+966551112233" },
     { name: "فاطمة عبدالرحمن السالم", email: "fatima@gmail.com", phone: "+966552223344" },
