@@ -38,7 +38,7 @@ async function main() {
 
   const admin = await prisma.user.upsert({
     where: { email: "admin@store.com" },
-    update: {},
+    update: { passwordHash: adminPassword },
     create: {
       name: "عبدالله المدير",
       email: "admin@store.com",
@@ -52,7 +52,7 @@ async function main() {
 
   const employee = await prisma.user.upsert({
     where: { email: "employee@store.com" },
-    update: {},
+    update: { passwordHash: employeePassword },
     create: {
       name: "محمد الموظف",
       email: "employee@store.com",
@@ -66,24 +66,25 @@ async function main() {
 
   // Enterprise Role Users
   const roleUsers = [
-    { email: "gm@store.com", name: "المهندس عادل (المدير العام)", role: UserRole.ADMIN },
-    { email: "finance@store.com", name: "أستاذ طارق (مدير المالية)", role: UserRole.ADMIN },
-    { email: "accountant@store.com", name: "أستاذة ماجدة (رئيسة المحاسبين)", role: UserRole.ADMIN },
-    { email: "purchasing@store.com", name: "المهندس سلطان (مدير المشتريات)", role: UserRole.ADMIN },
-    { email: "salesmgr@store.com", name: "أستاذ خالد (مدير المبيعات)", role: UserRole.ADMIN },
-    { email: "storekeeper@store.com", name: "سعد (أمين المستودع)", role: UserRole.EMPLOYEE },
+    { email: "gm@store.com", name: "المهندس عادل (المدير العام)", role: UserRole.ADMIN, positionCode: "GENERAL_MANAGER" },
+    { email: "finance@store.com", name: "أستاذ طارق (مدير المالية)", role: UserRole.ADMIN, positionCode: "FINANCE_MANAGER" },
+    { email: "accountant@store.com", name: "أستاذة ماجدة (رئيسة المحاسبين)", role: UserRole.ADMIN, positionCode: "CHIEF_ACCOUNTANT" },
+    { email: "purchasing@store.com", name: "المهندس سلطان (مدير المشتريات)", role: UserRole.ADMIN, positionCode: "PURCHASE_MANAGER" },
+    { email: "salesmgr@store.com", name: "أستاذ خالد (مدير المبيعات)", role: UserRole.ADMIN, positionCode: "SALES_MANAGER" },
+    { email: "storekeeper@store.com", name: "سعد (أمين المستودع)", role: UserRole.EMPLOYEE, positionCode: "STOREKEEPER" },
   ];
 
   for (const ru of roleUsers) {
     await prisma.user.upsert({
       where: { email: ru.email },
-      update: {},
+      update: { passwordHash: adminPassword, positionCode: ru.positionCode },
       create: {
         name: ru.name,
         email: ru.email,
         phone: "+96650" + Math.floor(1000000 + Math.random() * 9000000),
         passwordHash: adminPassword,
         role: ru.role,
+        positionCode: ru.positionCode,
         emailVerified: new Date(),
         isActive: true,
       },
@@ -837,7 +838,132 @@ async function main() {
   console.log(`   ✅ ${settingsData.length} store settings created`);
 
   // ═══════════════════════════════════════════════════════════
-  // 15. SUMMARY
+  // 15. ENTERPRISE ORGANIZATIONAL HIERARCHY & GOVERNANCE
+  // ═══════════════════════════════════════════════════════════
+  console.log("🏛️  Creating enterprise departments and positions...");
+
+  const depExec = await prisma.department.upsert({
+    where: { code: "EXEC" },
+    update: {},
+    create: { code: "EXEC", name: "الإدارة العليا والتنفيذية", headPositionCode: "GENERAL_MANAGER", description: "التخطيط والقيادة الاستراتيجية" },
+  });
+
+  const depFin = await prisma.department.upsert({
+    where: { code: "FIN" },
+    update: {},
+    create: { code: "FIN", name: "الشؤون المالية والمحاسبة", headPositionCode: "FINANCE_MANAGER", description: "الحسابات والميزانيات والاعتمادات المالية" },
+  });
+
+  const depAcc = await prisma.department.upsert({
+    where: { code: "ACC" },
+    update: {},
+    create: { code: "ACC", name: "قسم المحاسبة العامة", parentId: depFin.id, headPositionCode: "CHIEF_ACCOUNTANT", description: "القيود والتسويات والسندات" },
+  });
+
+  const depSales = await prisma.department.upsert({
+    where: { code: "SALES" },
+    update: {},
+    create: { code: "SALES", name: "المبيعات والتسويق", headPositionCode: "SALES_MANAGER", description: "المبيعات والعملاء وعروض الأسعار" },
+  });
+
+  const depInv = await prisma.department.upsert({
+    where: { code: "INV" },
+    update: {},
+    create: { code: "INV", name: "المخازن واللوجستيات", headPositionCode: "OPERATIONS_MANAGER", description: "إدارة المخزون والشحنات" },
+  });
+
+  const depProc = await prisma.department.upsert({
+    where: { code: "PROC" },
+    update: {},
+    create: { code: "PROC", name: "المشتريات والتوريد", headPositionCode: "PURCHASE_MANAGER", description: "أوامر الشراء والتفاوض مع الموردين" },
+  });
+
+  const positionsData = [
+    { code: "SUPER_ADMIN", title: "مدير النظام العام", departmentId: depExec.id, hierarchyLevel: 1, reportsToCode: null, maxApprovalAmount: null },
+    { code: "GENERAL_MANAGER", title: "المدير العام", departmentId: depExec.id, hierarchyLevel: 2, reportsToCode: "SUPER_ADMIN", maxApprovalAmount: null },
+    { code: "FINANCE_MANAGER", title: "مدير الشؤون المالية", departmentId: depFin.id, hierarchyLevel: 3, reportsToCode: "GENERAL_MANAGER", maxApprovalAmount: 500000 },
+    { code: "CHIEF_ACCOUNTANT", title: "رئيس المحاسبين", departmentId: depAcc.id, hierarchyLevel: 4, reportsToCode: "FINANCE_MANAGER", maxApprovalAmount: 50000 },
+    { positionCode: "PURCHASE_MANAGER", title: "مدير المشتريات", departmentId: depProc.id, hierarchyLevel: 3, reportsToCode: "GENERAL_MANAGER", maxApprovalAmount: 100000 },
+    { positionCode: "SALES_MANAGER", title: "مدير المبيعات", departmentId: depSales.id, hierarchyLevel: 3, reportsToCode: "GENERAL_MANAGER", maxApprovalAmount: 75000 },
+    { positionCode: "OPERATIONS_MANAGER", title: "مدير العمليات والمخازن", departmentId: depInv.id, hierarchyLevel: 3, reportsToCode: "GENERAL_MANAGER", maxApprovalAmount: 80000 },
+    { positionCode: "STOREKEEPER", title: "أمين المخزن", departmentId: depInv.id, hierarchyLevel: 5, reportsToCode: "OPERATIONS_MANAGER", maxApprovalAmount: 10000 },
+    { positionCode: "SALES_EMPLOYEE", title: "ممثل المبيعات", departmentId: depSales.id, hierarchyLevel: 5, reportsToCode: "SALES_MANAGER", maxApprovalAmount: 5000 },
+  ];
+
+  for (const pos of positionsData) {
+    const code = pos.code || pos.positionCode!;
+    await prisma.position.upsert({
+      where: { code },
+      update: { title: pos.title, hierarchyLevel: pos.hierarchyLevel, reportsToCode: pos.reportsToCode, maxApprovalAmount: pos.maxApprovalAmount },
+      create: {
+        code,
+        title: pos.title,
+        departmentId: pos.departmentId,
+        hierarchyLevel: pos.hierarchyLevel,
+        reportsToCode: pos.reportsToCode,
+        maxApprovalAmount: pos.maxApprovalAmount,
+      },
+    });
+  }
+
+  // Authority Matrix Rules
+  const matrixRules = [
+    { module: "PURCHASES", action: "CREATE", positionCode: "PURCHASE_MANAGER", maxAmount: 100000 },
+    { module: "PURCHASES", action: "APPROVE", positionCode: "FINANCE_MANAGER", maxAmount: 500000 },
+    { module: "PURCHASES", action: "APPROVE", positionCode: "GENERAL_MANAGER", maxAmount: null },
+    { module: "EXPENSES", action: "CREATE", positionCode: "CHIEF_ACCOUNTANT", maxAmount: 50000 },
+    { module: "EXPENSES", action: "APPROVE", positionCode: "FINANCE_MANAGER", maxAmount: 200000 },
+    { module: "INVENTORY", action: "ADJUST", positionCode: "STOREKEEPER", maxAmount: 10000 },
+    { module: "INVENTORY", action: "APPROVE", positionCode: "OPERATIONS_MANAGER", maxAmount: 80000 },
+  ];
+
+  for (const rule of matrixRules) {
+    await prisma.authorityMatrixRule.upsert({
+      where: { module_action_positionCode: { module: rule.module, action: rule.action, positionCode: rule.positionCode } },
+      update: { maxAmount: rule.maxAmount },
+      create: { module: rule.module, action: rule.action, positionCode: rule.positionCode, maxAmount: rule.maxAmount },
+    });
+  }
+
+  // Delegations
+  const accountantUser = await prisma.user.findFirst({ where: { positionCode: "CHIEF_ACCOUNTANT" } });
+  const financeUser = await prisma.user.findFirst({ where: { positionCode: "FINANCE_MANAGER" } });
+
+  if (accountantUser && financeUser) {
+    await prisma.delegationRecord.create({
+      data: {
+        delegatorUserId: financeUser.id,
+        delegatorName: financeUser.name,
+        delegatorPositionCode: "FINANCE_MANAGER",
+        delegateeUserId: accountantUser.id,
+        delegateeName: accountantUser.name,
+        delegateePositionCode: "CHIEF_ACCOUNTANT",
+        module: "EXPENSES",
+        startDate: new Date(),
+        endDate: new Date(Date.now() + 86400000 * 7),
+        status: "ACTIVE",
+        reason: "تفويض مؤقت لمراجعة واعتماد المصروفات خلال فترة الإجازة السنوية",
+      },
+    });
+  }
+
+  // Sample Approval Requests
+  const sampleRequests = [
+    { documentType: "PURCHASE_ORDER", documentId: "PO-2026-001", documentNumber: "PO-2026-001", amount: 45000, requesterId: admin.id, requesterName: "المهندس سلطان (مدير المشتريات)", notes: "أمر شراء أجهزة ذكية للمستودع الرئيسي" },
+    { documentType: "EXPENSE_VOUCHER", documentId: "EXP-2026-088", documentNumber: "EXP-2026-088", amount: 12500, requesterId: admin.id, requesterName: "أستاذة ماجدة (رئيسة المحاسبين)", notes: "سند صرف صيانة الأجهزة والسيرفرات" },
+    { documentType: "INVENTORY_ADJUSTMENT", documentId: "ADJ-2026-012", documentNumber: "ADJ-2026-012", amount: 8400, requesterId: admin.id, requesterName: "سعد (أمين المستودع)", notes: "تسوية مخزنية جراء التلف أثناء التوليد" },
+  ];
+
+  for (const req of sampleRequests) {
+    await prisma.approvalRequest.create({
+      data: req,
+    });
+  }
+
+  console.log("   ✅ Governance hierarchy, positions, matrix, and approval requests seeded successfully.");
+
+  // ═══════════════════════════════════════════════════════════
+  // 16. SUMMARY
   // ═══════════════════════════════════════════════════════════
   console.log("\n" + "═".repeat(50));
   console.log("🎉 ENTERPRISE DATA GENERATION COMPLETE!");
@@ -845,24 +971,13 @@ async function main() {
 
   const counts = {
     users: await prisma.user.count(),
-    addresses: await prisma.address.count(),
-    brands: await prisma.brand.count(),
-    categories: await prisma.category.count(),
-    products: await prisma.product.count(),
-    productImages: await prisma.productImage.count(),
-    productVariants: await prisma.productVariant.count(),
-    productCategories: await prisma.productCategory.count(),
-    media: await prisma.media.count(),
+    departments: await prisma.department.count(),
+    positions: await prisma.position.count(),
+    authorityRules: await prisma.authorityMatrixRule.count(),
+    approvalRequests: await prisma.approvalRequest.count(),
+    delegations: await prisma.delegationRecord.count(),
     orders: await prisma.order.count(),
-    orderItems: await prisma.orderItem.count(),
-    orderTimelines: await prisma.orderTimeline.count(),
-    inventoryTransactions: await prisma.inventoryTransaction.count(),
-    expenseCategories: await prisma.expenseCategory.count(),
-    expenses: await prisma.expense.count(),
-    transactions: await prisma.transaction.count(),
-    notifications: await prisma.notification.count(),
-    auditLogs: await prisma.auditLog.count(),
-    storeSettings: await prisma.storeSetting.count(),
+    products: await prisma.product.count(),
   };
 
   console.log("\n📊 Record counts:");

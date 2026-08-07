@@ -175,6 +175,43 @@ export const ENTERPRISE_POSITIONS: EnterpriseRoleDefinition[] = [
 ];
 
 /**
+ * Get enterprise position ID from user object (by email or role)
+ */
+export function getUserPositionId(user?: { email?: string | null; role?: string | null } | null): string {
+  if (!user || !user.email) return "CUSTOMER";
+  const email = user.email.toLowerCase().trim();
+  if (email.startsWith("admin@")) return "SUPER_ADMIN";
+  if (email.startsWith("gm@")) return "GENERAL_MANAGER";
+  if (email.startsWith("finance@")) return "FINANCE_MANAGER";
+  if (email.startsWith("accountant@")) return "CHIEF_ACCOUNTANT";
+  if (email.startsWith("purchasing@")) return "PURCHASING_MANAGER";
+  if (email.startsWith("salesmgr@")) return "SALES_MANAGER";
+  if (email.startsWith("storekeeper@")) return "STOREKEEPER";
+  if (email.startsWith("employee@")) return "SALES_EMPLOYEE";
+
+  if (user.role === "ADMIN" || user.role === "SUPER_ADMIN") return "SUPER_ADMIN";
+  if (user.role === "EMPLOYEE") return "SALES_EMPLOYEE";
+  return "CUSTOMER";
+}
+
+/**
+ * Check whether a user has access to a specific module
+ */
+export function hasModuleAccess(
+  user?: { email?: string | null; role?: string | null } | null,
+  module?: PermissionModule | "DASHBOARD"
+): boolean {
+  if (!module || module === "DASHBOARD") return true;
+  const positionId = getUserPositionId(user);
+  if (positionId === "SUPER_ADMIN") return true;
+
+  const roleDef = ENTERPRISE_POSITIONS.find((p) => p.id === positionId);
+  if (!roleDef) return false;
+
+  return roleDef.permissions.some((p) => p.module === module);
+}
+
+/**
  * Check whether a user with assigned permissions or role has access to perform an action on a module
  */
 export function hasPermission(

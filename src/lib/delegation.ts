@@ -1,6 +1,4 @@
-/**
- * ENTERPRISE TEMPORARY DELEGATION SYSTEM
- */
+import prisma from "@/lib/prisma";
 
 export interface DelegationRecord {
   id: string;
@@ -43,6 +41,50 @@ export function getActiveDelegations(): DelegationRecord[] {
   );
 }
 
+export async function fetchActiveDbDelegations() {
+  const now = new Date();
+  try {
+    const records = await prisma.delegationRecord.findMany({
+      where: {
+        status: "ACTIVE",
+        startDate: { lte: now },
+        endDate: { gte: now },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+    return records;
+  } catch {
+    return MOCK_DELEGATIONS;
+  }
+}
+
+export async function resolveEffectiveApproverUserIds(targetPositionCode: string): Promise<string[]> {
+  // Find users holding targetPositionCode or users with active delegations from delegators holding targetPositionCode
+  try {
+    const directUsers = await prisma.user.findMany({
+      where: { positionCode: targetPositionCode, isActive: true },
+      select: { id: true },
+    });
+    const directUserIds = directUsers.map((u) => u.id);
+
+    const now = new Date();
+    const activeDelegations = await prisma.delegationRecord.findMany({
+      where: {
+        delegatorPositionCode: targetPositionCode,
+        status: "ACTIVE",
+        startDate: { lte: now },
+        endDate: { gte: now },
+      },
+      select: { delegateeUserId: true },
+    });
+
+    const delegateeIds = activeDelegations.map((d) => d.delegateeUserId);
+    return Array.from(new Set([...directUserIds, ...delegateeIds]));
+  } catch {
+    return [];
+  }
+}
+
 export function createDelegation(data: Omit<DelegationRecord, "id" | "status" | "createdAt">): DelegationRecord {
   const newDelegation: DelegationRecord = {
     ...data,
@@ -63,3 +105,4 @@ export function revokeDelegation(id: string): boolean {
   }
   return false;
 }
+

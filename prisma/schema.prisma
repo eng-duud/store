@@ -23,6 +23,9 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
+  positionCode  String?
+  departmentId  String?
+  managerId     String?
   addresses    Address[]
   carts        Cart[]
   orders       Order[]
@@ -31,6 +34,7 @@ model User {
 
   @@index([email])
   @@index([role])
+  @@index([positionCode])
 }
 
 model Session {
@@ -474,3 +478,156 @@ enum TransactionType {
   INCOME
   EXPENSE
 }
+
+// ─── Enterprise Governance & Organizational Hierarchy ─────
+
+model Department {
+  id              String       @id @default(cuid())
+  code            String       @unique
+  name            String
+  description     String?
+  status          String       @default("ACTIVE")
+  parentId        String?
+  headPositionCode String?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  parent          Department?  @relation("DepartmentTree", fields: [parentId], references: [id], onDelete: SetNull)
+  children        Department[] @relation("DepartmentTree")
+  positions       Position[]
+
+  @@index([code])
+  @@index([parentId])
+  @@index([status])
+}
+
+model Position {
+  id                String      @id @default(cuid())
+  code              String      @unique
+  title             String
+  departmentId      String
+  hierarchyLevel    Int         @default(1)
+  reportsToCode     String?
+  maxApprovalAmount Decimal?    @db.Decimal(12, 2)
+  canApprove        Boolean     @default(true)
+  status            String      @default("ACTIVE")
+  description       String?
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  department        Department  @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+
+  @@index([code])
+  @@index([departmentId])
+  @@index([reportsToCode])
+  @@index([hierarchyLevel])
+}
+
+model AuthorityMatrixRule {
+  id                      String   @id @default(cuid())
+  module                  String
+  action                  String
+  positionCode            String
+  maxAmount               Decimal? @db.Decimal(12, 2)
+  requiresManagerApproval Boolean  @default(false)
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+
+  @@unique([module, action, positionCode])
+  @@index([module])
+  @@index([positionCode])
+}
+
+model ApprovalRequest {
+  id                String             @id @default(cuid())
+  documentType      String
+  documentId        String
+  documentNumber    String
+  amount            Decimal            @db.Decimal(12, 2)
+  requesterId       String
+  requesterName     String
+  currentStepNumber Int                @default(1)
+  status            ApprovalReqStatus  @default(PENDING)
+  notes             String?
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+
+  decisions         ApprovalDecision[]
+  escalations       EscalationLog[]
+
+  @@index([documentType])
+  @@index([documentId])
+  @@index([requesterId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model ApprovalDecision {
+  id                  String           @id @default(cuid())
+  requestId           String
+  stepNumber          Int
+  approverId          String
+  approverName        String
+  approverPositionCode String
+  action              ApprovalAction
+  comments            String?
+  delegatedFromUserId String?
+  createdAt           DateTime         @default(now())
+
+  request             ApprovalRequest  @relation(fields: [requestId], references: [id], onDelete: Cascade)
+
+  @@index([requestId])
+  @@index([approverId])
+  @@index([approverPositionCode])
+}
+
+model DelegationRecord {
+  id                    String   @id @default(cuid())
+  delegatorUserId       String
+  delegatorName         String
+  delegatorPositionCode String
+  delegateeUserId       String
+  delegateeName         String
+  delegateePositionCode String
+  module                String   @default("ALL")
+  startDate             DateTime
+  endDate               DateTime
+  status                String   @default("ACTIVE")
+  reason                String
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@index([delegatorUserId])
+  @@index([delegateeUserId])
+  @@index([status])
+}
+
+model EscalationLog {
+  id               String          @id @default(cuid())
+  requestId        String
+  fromPositionCode String
+  toPositionCode   String
+  reason           String
+  escalatedAt      DateTime        @default(now())
+
+  request          ApprovalRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+
+  @@index([requestId])
+}
+
+enum ApprovalReqStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  RETURNED
+  EXPIRED
+}
+
+enum ApprovalAction {
+  APPROVE
+  REJECT
+  RETURN
+  DELEGATE
+  ESCALATE
+}
+

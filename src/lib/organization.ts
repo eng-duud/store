@@ -1,3 +1,5 @@
+import prisma from "@/lib/prisma";
+
 /**
  * ENTERPRISE ORGANIZATIONAL HIERARCHY ENGINE
  */
@@ -87,3 +89,37 @@ export function getSuperiorPosition(positionId: string): string | undefined {
   const node = REPORTING_HIERARCHY.find((n) => n.positionId === positionId);
   return node?.reportsToPositionId;
 }
+
+/**
+ * Get dynamic manager chain from database starting from given position code
+ */
+export async function getDynamicApprovalChain(startPositionCode: string): Promise<{ positionCode: string; title: string }[]> {
+  try {
+    const chain: { positionCode: string; title: string }[] = [];
+    let currentCode: string | null = startPositionCode;
+
+    while (currentCode) {
+      const targetCode: string = currentCode;
+      const foundPos: { code: string; title: string; reportsToCode: string | null } | null = await prisma.position.findUnique({
+        where: { code: targetCode },
+        select: { code: true, title: true, reportsToCode: true },
+      });
+      if (!foundPos) break;
+      chain.push({ positionCode: foundPos.code, title: foundPos.title });
+      currentCode = foundPos.reportsToCode;
+    }
+
+    return chain;
+  } catch {
+    const chain: { positionCode: string; title: string }[] = [];
+    let curr: string | undefined = startPositionCode;
+    while (curr) {
+      const node = REPORTING_HIERARCHY.find((n) => n.positionId === curr);
+      if (!node) break;
+      chain.push({ positionCode: node.positionId, title: node.positionName });
+      curr = node.reportsToPositionId;
+    }
+    return chain;
+  }
+}
+

@@ -1,14 +1,15 @@
-/**
- * ENTERPRISE MULTI-STEP APPROVAL WORKFLOW ENGINE
- */
+import prisma from "@/lib/prisma";
+import { ApprovalReqStatus } from "@prisma/client";
 
 export type DocumentWorkflowType =
   | "PURCHASE_ORDER"
   | "EXPENSE_VOUCHER"
   | "INVENTORY_ADJUSTMENT"
-  | "SALES_DISCOUNT";
+  | "SALES_DISCOUNT"
+  | "JOURNAL_ENTRY"
+  | "REFUND";
 
-export type ApprovalStatus = "PENDING" | "APPROVED" | "REJECTED";
+export type ApprovalStatus = "PENDING" | "APPROVED" | "REJECTED" | "RETURNED" | "EXPIRED";
 
 export interface ApprovalStep {
   stepNumber: number;
@@ -35,7 +36,7 @@ export interface WorkflowInstance {
   createdAt: Date | string;
 }
 
-export const WORKFLOW_CONFIGS: Record<DocumentWorkflowType, { name: string; chain: { positionId: string; name: string }[] }> = {
+export const WORKFLOW_CONFIGS: Record<string, { name: string; chain: { positionId: string; name: string }[] }> = {
   PURCHASE_ORDER: {
     name: "سلسلة اعتماد أذونات الشراء",
     chain: [
@@ -65,10 +66,116 @@ export const WORKFLOW_CONFIGS: Record<DocumentWorkflowType, { name: string; chai
       { positionId: "FINANCE_MANAGER", name: "مدير الشؤون المالية" },
     ],
   },
+  JOURNAL_ENTRY: {
+    name: "سلسلة اعتماد القيود المحاسبية",
+    chain: [
+      { positionId: "CHIEF_ACCOUNTANT", name: "رئيس المحاسبين" },
+      { positionId: "FINANCE_MANAGER", name: "مدير الشؤون المالية" },
+    ],
+  },
 };
 
 /**
- * Initialize a new workflow instance for a document
+ * Initialize a new workflow instance in DB
+ */
+export async function createDbApprovalRequest(
+  documentType: string,
+  documentId: string,
+  documentNumber: string,
+  amount: number,
+  requesterId: string,
+  requesterName: string,
+  notes?: string
+) {
+  try {
+    const request = await prisma.approvalRequest.create({
+      data: {
+        documentType,
+        documentId,
+        documentNumber,
+        amount,
+        requesterId,
+        requesterName,
+        currentStepNumber: 1,
+        status: "PENDING",
+        notes,
+      },
+    });
+    return request;
+  } catch (err) {
+    console.error("Error creating DB approval request:", err);
+    return null;
+  }
+}
+
+/**
+ * Process a decision on a DB approval request
+ */
+export async function processDbApprovalDecision(
+  requestId: string,
+  approverId: string,
+  approverName: string,
+  approverPositionCode: string,
+  action: "APPROVE" | "REJECT" | "RETURN" | "DELEGATE",
+  comments?: string,
+  delegatedFromUserId?: string
+) {
+  const request = await prisma.approvalRequest.findUnique({
+    where: { id: requestId },
+    include: { decisions: true },
+  });
+
+  if (!request || request.status !== "PENDING") {
+    throw new Error("طلب الاعتماد غير متاح أو تم التخاذ قرار فيه بالفعل");
+  }
+
+  const chain = WORKFLOW_CONFIGS[request.documentType]?.chain || [
+    { positionId: "FINANCE_MANAGER", name: "مدير الشؤون المالية" },
+    { positionId: "GENERAL_MANAGER", name: "المدير العام" },
+  ];
+
+  await prisma.approvalDecision.create({
+    data: {
+      requestId: request.id,
+      stepNumber: request.currentStepNumber,
+      approverId,
+      approverName,
+      approverPositionCode,
+      action: action as any,
+      comments: comments || (action === "APPROVE" ? "تمت الموافقة" : action === "REJECT" ? "تم الرفض" : "إعادة للمراجعة"),
+      delegatedFromUserId,
+    },
+  });
+
+  let newStatus: ApprovalReqStatus = request.status;
+  let nextStep = request.currentStepNumber;
+
+  if (action === "REJECT") {
+    newStatus = ApprovalReqStatus.REJECTED;
+  } else if (action === "RETURN") {
+    newStatus = ApprovalReqStatus.RETURNED;
+  } else if (action === "APPROVE") {
+    if (request.currentStepNumber < chain.length) {
+      nextStep = request.currentStepNumber + 1;
+    } else {
+      newStatus = ApprovalReqStatus.APPROVED;
+    }
+  }
+
+  const updated = await prisma.approvalRequest.update({
+    where: { id: request.id },
+    data: {
+      status: newStatus as any,
+      currentStepNumber: nextStep,
+    },
+    include: { decisions: true },
+  });
+
+  return updated;
+}
+
+/**
+ * Legacy in-memory workflow creator
  */
 export function createWorkflowInstance(
   documentType: DocumentWorkflowType,
@@ -78,7 +185,7 @@ export function createWorkflowInstance(
   submittedByUserId: string,
   submittedByUserName: string
 ): WorkflowInstance {
-  const config = WORKFLOW_CONFIGS[documentType];
+  const config = WORKFLOW_CONFIGS[documentType] || WORKFLOW_CONFIGS.PURCHASE_ORDER;
   const steps: ApprovalStep[] = config.chain.map((item, idx) => ({
     stepNumber: idx + 1,
     requiredPositionId: item.positionId,
@@ -102,7 +209,7 @@ export function createWorkflowInstance(
 }
 
 /**
- * Process approval or rejection for the current workflow step
+ * Legacy in-memory step processor
  */
 export function processWorkflowStep(
   instance: WorkflowInstance,
@@ -140,3 +247,4 @@ export function processWorkflowStep(
 
   return instance;
 }
+
