@@ -1,7 +1,16 @@
 import prisma from "@/lib/prisma";
 import { createAuditLog } from "./audit.service";
 
-export type InventoryTransactionType = "PURCHASE" | "SALE" | "ADJUSTMENT" | "RETURN" | "CANCELLATION";
+export type InventoryTransactionType =
+  | "PURCHASE"
+  | "SALE"
+  | "ADJUSTMENT"
+  | "RETURN"
+  | "CANCELLATION"
+  | "TRANSFER_IN"
+  | "TRANSFER_OUT"
+  | "DAMAGED_GOODS"
+  | "EXPIRED_GOODS";
 
 export interface StockAdjustmentInput {
   productId: string;
@@ -12,6 +21,7 @@ export interface StockAdjustmentInput {
   reference?: string;
   userId?: string;
   userName?: string;
+  warehouseCode?: string;
 }
 
 export async function getInventoryOverview(options?: {
@@ -113,6 +123,7 @@ export async function getInventoryOverview(options?: {
       availableStock,
       lowStockThreshold: p.lowStockThreshold,
       stockStatus,
+      warehouseCode: "WH-MAIN",
       updatedAt: p.updatedAt,
     };
   });
@@ -131,6 +142,7 @@ export async function getInventoryOverview(options?: {
       totalCostValue,
       totalRetailValue,
       expectedProfit: totalRetailValue - totalCostValue,
+      defaultWarehouse: "المستودع الرئيسي (WH-MAIN)",
     },
   };
 }
@@ -151,10 +163,14 @@ export async function adjustStock(input: StockAdjustmentInput) {
     case "PURCHASE":
     case "RETURN":
     case "CANCELLATION":
+    case "TRANSFER_IN":
       newQuantity = oldQuantity + Math.abs(input.quantity);
       break;
 
     case "SALE":
+    case "DAMAGED_GOODS":
+    case "EXPIRED_GOODS":
+    case "TRANSFER_OUT":
       newQuantity = Math.max(0, oldQuantity - Math.abs(input.quantity));
       break;
 

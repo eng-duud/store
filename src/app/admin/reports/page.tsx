@@ -190,6 +190,11 @@ function StatCard({ label, value, sub, icon, color }: { label: string; value: st
 }
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
+import { DocumentViewerModal } from "@/components/shared/document-viewer-modal";
+import { DocumentPayload } from "@/components/shared/document-engine";
+import { Printer } from "lucide-react";
+import { Button } from "@/components/ui/button";
+
 export default function AdminReportsPage() {
   const { formatCurrency: fmtCurrency, settings } = useSettings();
   const fmt = (n: number) => fmtCurrency(n);
@@ -200,6 +205,8 @@ export default function AdminReportsPage() {
   const [salesData, setSalesData] = useState<SalesData | null>(null);
   const [productData, setProductData] = useState<ProductData | null>(null);
   const [customerData, setCustomerData] = useState<CustomerData | null>(null);
+
+  const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
 
   const loadData = useCallback(async (tab: string, r: DateRange) => {
     setIsLoading(true);
@@ -224,29 +231,134 @@ export default function AdminReportsPage() {
     loadData(activeTab, range);
   }, [activeTab, range, loadData]);
 
+  // Construct Document Payload for the active tab
+  const getDocumentPayload = (): DocumentPayload => {
+    const rangeLabel = RANGE_OPTIONS.find((o) => o.value === range)?.label || range;
+    const todayStr = new Date().toLocaleDateString("ar-SA");
+
+    if (activeTab === "summary" && summaryData) {
+      return {
+        title: `تقرير ملخص الأعمال العام - ${rangeLabel}`,
+        documentNumber: `REP-SUM-${Date.now().toString().slice(-6)}`,
+        type: "FINANCIAL_REPORT",
+        date: todayStr,
+        reportSummary: {
+          "إجمالي الإيرادات": summaryData.totalRevenue,
+          "إجمالي المصروفات": summaryData.totalExpenses,
+          "صافي الأرباح المقدرة": summaryData.estimatedProfit,
+          "متوسط قيمة الطلب": summaryData.averageOrderValue,
+          "الطلبات المكتملة": summaryData.completedOrdersCount,
+          "الطلبات الملغاة": summaryData.cancelledOrdersCount,
+        },
+        items: summaryData.topProducts.map((p) => ({
+          name: p.name,
+          quantity: p.totalQuantity,
+          unitPrice: p.totalQuantity > 0 ? p.totalSales / p.totalQuantity : 0,
+          total: p.totalSales,
+        })),
+        totalAmount: summaryData.totalRevenue,
+        notes: `تقرير مالي إجمالي تم إصداره تلقائياً لنظام ${settings.name} بناءً على النطاق الزمني: ${rangeLabel}.`,
+      };
+    }
+
+    if (activeTab === "sales" && salesData) {
+      return {
+        title: `تقرير المبيعات التفصيلي - ${rangeLabel}`,
+        documentNumber: `REP-SALES-${Date.now().toString().slice(-6)}`,
+        type: "SALES_REPORT",
+        date: todayStr,
+        reportSummary: {
+          "إجمالي إيرادات المبيعات": salesData.totalSales,
+          "عدد الطلبات الإجمالي": salesData.totalOrders,
+        },
+        items: salesData.salesTrend.map((t) => ({
+          name: `مبيعات يوم ${t.date}`,
+          quantity: t.ordersCount,
+          unitPrice: t.ordersCount > 0 ? t.revenue / t.ordersCount : 0,
+          total: t.revenue,
+        })),
+        totalAmount: salesData.totalSales,
+      };
+    }
+
+    if (activeTab === "products" && productData) {
+      return {
+        title: `تقرير تقييم المخزون والمنتجات - ${rangeLabel}`,
+        documentNumber: `REP-PROD-${Date.now().toString().slice(-6)}`,
+        type: "INVENTORY_VALUATION",
+        date: todayStr,
+        reportSummary: {
+          "إجمالي المنتجات": productData.totalProducts,
+          "المنتجات النشطة": productData.activeProducts,
+          "إجمالي قيمة المخزون": productData.totalInventoryValue,
+          "منتجات منخفضة المخزون": productData.lowStock,
+        },
+        items: productData.topProducts.map((p) => ({
+          name: `${p.name} (رمز: ${p.sku})`,
+          quantity: p.stockQuantity,
+          unitPrice: p.price,
+          total: p.price * p.stockQuantity,
+        })),
+        totalAmount: productData.totalInventoryValue,
+      };
+    }
+
+    return {
+      title: `تقرير العملاء والأداء - ${rangeLabel}`,
+      documentNumber: `REP-CUST-${Date.now().toString().slice(-6)}`,
+      type: "CUSTOMER_STATEMENT",
+      date: todayStr,
+      items: (customerData?.topSpenders || []).map((c) => ({
+        name: `${c.name} (${c.email})`,
+        quantity: c.ordersCount,
+        unitPrice: c.ordersCount > 0 ? c.totalSpent / c.ordersCount : 0,
+        total: c.totalSpent,
+      })),
+      totalAmount: customerData?.topSpenders.reduce((s, c) => s + c.totalSpent, 0) || 0,
+    };
+  };
+
   return (
     <div className="space-y-6" dir="rtl">
+      {/* Document Viewer Modal */}
+      <DocumentViewerModal
+        isOpen={isPrintModalOpen}
+        onClose={() => setIsPrintModalOpen(false)}
+        payload={getDocumentPayload()}
+      />
+
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">التقارير والتحليلات</h1>
-          <p className="text-sm text-muted-foreground mt-1">بيانات حية لأداء متجرك</p>
+          <p className="text-sm text-muted-foreground mt-1">بيانات حية لأداء متجرك ومعاينة مستندات الطباعة والتصدير</p>
         </div>
-        {/* Date Range Selector */}
-        <div className="flex flex-wrap gap-1.5 bg-muted/50 rounded-xl p-1">
-          {RANGE_OPTIONS.map((opt) => (
-            <button
-              key={opt.value}
-              onClick={() => setRange(opt.value)}
-              className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all duration-150 ${
-                range === opt.value
-                  ? "bg-primary text-primary-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground hover:bg-accent"
-              }`}
-            >
-              {opt.label}
-            </button>
-          ))}
+
+        <div className="flex items-center gap-3">
+          <Button
+            onClick={() => setIsPrintModalOpen(true)}
+            className="rounded-xl font-bold text-xs gap-2 bg-primary shadow-sm hover:shadow transition-all cursor-pointer"
+          >
+            <Printer className="w-4 h-4" />
+            طباعة وتصدير المستند
+          </Button>
+
+          {/* Date Range Selector */}
+          <div className="flex flex-wrap gap-1.5 bg-muted/50 rounded-xl p-1">
+            {RANGE_OPTIONS.map((opt) => (
+              <button
+                key={opt.value}
+                onClick={() => setRange(opt.value)}
+                className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all duration-150 ${
+                  range === opt.value
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground hover:bg-accent"
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 

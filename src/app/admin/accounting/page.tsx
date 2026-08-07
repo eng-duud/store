@@ -3,6 +3,10 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { Badge } from "@/components/ui/badge";
 import { useSettings } from "@/hooks/use-settings";
+import { DocumentViewerModal } from "@/components/shared/document-viewer-modal";
+import { Printer } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { generateFinancialStatements, CHART_OF_ACCOUNTS } from "@/lib/financial-engine";
 
 type DateRange = "today" | "yesterday" | "week" | "month" | "year" | "all";
 
@@ -335,6 +339,7 @@ function CategoryManager({ categories, onRefresh }: { categories: ExpenseCategor
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function AdminAccountingPage() {
+  const [activeTab, setActiveTab] = useState<"overview" | "coa" | "journals" | "statements">("overview");
   const [range, setRange] = useState<DateRange>("month");
   const [summary, setSummary] = useState<FinancialSummary | null>(null);
   const [categories, setCategories] = useState<ExpenseCategory[]>([]);
@@ -348,9 +353,12 @@ export default function AdminAccountingPage() {
   const [filterCat, setFilterCat] = useState("");
   const [page, setPage] = useState(1);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
   const searchDebounce = useRef<NodeJS.Timeout | null>(null);
   const { formatCurrency: fmtCurrency, settings } = useSettings();
   _fmtCurrency = fmtCurrency;
+
+  const financialStatements = generateFinancialStatements();
 
   const loadSummary = useCallback(async (r: DateRange) => {
     setIsSummaryLoading(true);
@@ -358,35 +366,48 @@ export default function AdminAccountingPage() {
       const resp = await fetch(`/api/admin/accounting?range=${r}`);
       const json = await resp.json();
       if (json.success) setSummary(json.data);
+    } catch (e) {
+      console.error(e);
     } finally {
       setIsSummaryLoading(false);
     }
   }, []);
 
   const loadCategories = useCallback(async () => {
-    const resp = await fetch("/api/admin/expense-categories");
-    const json = await resp.json();
-    if (json.success) setCategories(json.data);
+    try {
+      const resp = await fetch("/api/admin/expense-categories");
+      const json = await resp.json();
+      if (json.success) setCategories(json.data);
+    } catch (e) {
+      console.error(e);
+    }
   }, []);
 
-  const loadExpenses = useCallback(async (q: string, cat: string, p: number) => {
+  const loadExpenses = useCallback(async (cat: string, q: string, p: number) => {
     setIsExpensesLoading(true);
     try {
       const params = new URLSearchParams();
-      if (q) params.set("q", q);
       if (cat) params.set("categoryId", cat);
+      if (q) params.set("q", q);
       params.set("page", String(p));
       const resp = await fetch(`/api/admin/expenses?${params}`);
       const json = await resp.json();
       if (json.success) setExpenses(json.data);
+    } catch (e) {
+      console.error(e);
     } finally {
       setIsExpensesLoading(false);
     }
   }, []);
 
-  useEffect(() => { loadSummary(range); }, [range, loadSummary]);
-  useEffect(() => { loadCategories(); }, [loadCategories]);
-  useEffect(() => { loadExpenses(searchQ, filterCat, page); }, [searchQ, filterCat, page, loadExpenses]);
+  useEffect(() => {
+    loadSummary(range);
+    loadCategories();
+  }, [range, loadSummary, loadCategories]);
+
+  useEffect(() => {
+    loadExpenses(filterCat, searchQ, page);
+  }, [filterCat, searchQ, page, loadExpenses]);
 
   const handleSearchChange = (val: string) => {
     if (searchDebounce.current) clearTimeout(searchDebounce.current);
@@ -398,7 +419,7 @@ export default function AdminAccountingPage() {
     setDeletingId(id);
     try {
       await fetch(`/api/admin/expenses/${id}`, { method: "DELETE" });
-      loadExpenses(searchQ, filterCat, page);
+      loadExpenses(filterCat, searchQ, page);
       loadSummary(range);
     } finally {
       setDeletingId(null);
@@ -408,19 +429,40 @@ export default function AdminAccountingPage() {
   const handleSaveExpense = () => {
     setShowAddExpense(false);
     setEditExpense(null);
-    loadExpenses(searchQ, filterCat, page);
+    loadExpenses(filterCat, searchQ, page);
     loadSummary(range);
   };
 
   return (
     <div className="space-y-6" dir="rtl">
-      {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      {/* Print Document Modal */}
+      <DocumentViewerModal
+        isOpen={isPrintModalOpen}
+        onClose={() => setIsPrintModalOpen(false)}
+        payload={{
+          title: "تقرير القوائم المالية الحسابية والميزانية",
+          documentNumber: `FIN-STMT-${Date.now().toString().slice(-6)}`,
+          type: "FINANCIAL_REPORT",
+          date: new Date().toLocaleDateString("ar-SA"),
+          reportSummary: {
+            "إجمالي الأصول": financialStatements.balanceSheet.totalAssets,
+            "إجمالي الالتزامات": financialStatements.balanceSheet.totalLiabilities,
+            "صافي الأرباح": financialStatements.incomeStatement.netProfit,
+            "هامش الربح الإجمالي": `${financialStatements.incomeStatement.grossProfitMargin.toFixed(1)}%`,
+          },
+          items: CHART_OF_ACCOUNTS.map((a) => ({
+            name: `${a.code} - ${a.name} (${a.category})`,
+            quantity: 1,
+            unitPrice: a.balance,
+            total: a.balance,
+          })),
+          totalAmount: financialStatements.balanceSheet.totalAssets,
+        }}
+      />
+
+      {/* Page Header */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b pb-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">المحاسبة المالية</h1>
-          <p className="text-sm text-muted-foreground mt-1">إدارة المصاريف والتقرير المالي</p>
-        </div>
-        <div className="flex flex-wrap gap-1.5 bg-muted/50 rounded-xl p-1">
           {RANGE_OPTIONS.map((opt) => (
             <button
               key={opt.value}
